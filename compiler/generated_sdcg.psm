@@ -1,0 +1,527 @@
+
+%%%  PRISM directives  %%%
+target(failure,0).
+failure:-not success(_c5b0).
+success(sdcg(_c734,_c788,[])).
+data(user).
+
+%%%  MSW declarations  %%%
+values(a(0), [a_0_1]).
+values(np(1), [np_1_2,np_1_1]).
+values(noun(1), [noun_1_2,noun_1_1]).
+values(det(1), [det_1_2,det_1_1]).
+
+%%%  Start symbol  %%%
+sdcg(A, B, C) :-
+        np(A, B, C).
+
+%%%  Non-terminals  %%%
+a(A, B) :-
+        msw(a(0), C),
+        (   C==a_0_1 ->
+            a_0_1(A, B)
+        ).
+a_0_1(A, B) :-
+        b(A, B).
+np(A, B, C) :-
+        msw(np(1), D),
+        (   D==np_1_2 ->
+            np_1_2(A, B, C)
+        ;   D==np_1_1 ->
+            np_1_1(A, B, C)
+        ).
+np_1_2(A, B, C) :-
+        noun(A, B, C).
+np_1_1(A, B, C) :-
+        det(A, B, D),
+        noun(A, D, C).
+noun(A, B, C) :-
+        msw(noun(1), D),
+        (   D==noun_1_2 ->
+            noun_1_2(A, B, C)
+        ;   D==noun_1_1 ->
+            noun_1_1(A, B, C)
+        ).
+noun_1_2(pl, A, B) :-
+        consume(A, dogs, B).
+noun_1_1(sg, A, B) :-
+        consume(A, dog, B).
+det(A, B, C) :-
+        msw(det(1), D),
+        (   D==det_1_2 ->
+            det_1_2(A, B, C)
+        ;   D==det_1_1 ->
+            det_1_1(A, B, C)
+        ).
+det_1_2(sg, A, B) :-
+        consume(A, the, B).
+det_1_1(pl, A, B) :-
+        consume(A, the, B).
+
+%%%  User defined  %%%
+write_implementation_rules(_, []).
+write_implementation_rules(A, [B|C]) :-
+        listing(B/A),
+        write_implementation_rules(A, C),
+        remove_rule(B, A).
+update_msw(A, B) :-
+        catch((values(A,C)->true ; asssert(values(A,[B]))), _, assert(values(A,[B]))),
+        (   ground(C) ->
+            true
+        ;   C=[B]
+        ),
+        (   member(B, C) ->
+            true
+        ;   retract(values(A,_)),
+            D=[B|C],
+            assert(values(A,D))
+        ).
+write_list([]).
+write_list([A|B]) :-
+        write(A),
+        nl,
+        write_list(B).
+unifiable_list(0, []).
+unifiable_list(A, [_|B]) :-
+        C is A-1,
+        unifiable_list(C, B), !.
+write_rules([]).
+write_rules([A|B]) :-
+        functor(A, C, 1),
+        A=..[C,D],
+        E is D+2,
+        listing(C/E),
+        values(A, F),
+        write_implementation_rules(E, F),
+        write_rules(B),
+        remove_rule(C, E).
+write_prism_program(A) :-
+        current_output(B),
+        set_output(A),
+        write_prism_directives,
+        section('MSW declarations'),
+        listing(values/2),
+        write_sdcg_start_rule,
+        section('Non-terminals'),
+        catch(findall(C,values(C,_),D), _, true),
+        write_rules(D),
+        retractall(values(_,_)),
+        section('User defined'),
+        listing,
+        set_output(B).
+write_prism_directives :-
+        (   not clause(sdcg_start_definition(_),_) ->
+            throw(error(no_sdcg_start_symbol))
+        ;   true
+        ),
+        sdcg_start_definition(A/B),
+        ground(A),
+        ground(B),
+        section('PRISM directives'),
+        writeq(target(failure,0)),
+        dot,
+        nl,
+        write((failure:-not success(_))),
+        dot,
+        nl,
+        C is B-1,
+        unifiable_list(C, D),
+        append(D, [[]], E),
+        F=..[A|E],
+        write(success(F)),
+        dot,
+        nl,
+        writeq(data(user)),
+        dot,
+        nl.
+rewrite_rule_rhs(A, A, [C], B) :-
+        C=..['{}',B].
+rewrite_rule_rhs(A, B, [D], C) :-
+        (   is_list(D) ->
+            generate_consumes(A, B, D, C)
+        ;   is_composed(D) ->
+            write('composed rules encountered'),
+            write(D),
+            nl
+        ;   is_code_block(D) ->
+            write('code block encountered'),
+            write(D),
+            nl,
+            D=..['{}',C],
+            A=B
+        ;   D=..E,
+            append(E, [A,B], F),
+            C=..F
+        ).
+rewrite_rule_rhs(A, B, [D|E], C) :-
+        rewrite_rule_rhs(A, F, [D], G), !,
+        rewrite_rule_rhs(F, B, E, H),
+        C=(G,H).
+write_prism_program :-
+        write_prism_program(user_output).
+test_run_tests([]) :-
+        write('Finished running tests'),
+        nl.
+test_run_tests([A|B]) :-
+        atom_codes(A, C),
+        append([116,101,115,116,95], C, D),
+        atom_codes(E, D),
+        (   clause(E, _) ->
+            write('Running test: '),
+            write(E),
+            write(' - '),
+            (   call(E) ->
+                write('OK')
+            ;   write('Failed')
+            )
+        ;   write('No test defined for clause: '),
+            write(A)
+        ),
+        nl,
+        test_run_tests(B).
+write_prism_program_to_file(A) :-
+        open(A, write, B),
+        write_prism_program(B),
+        close(B).
+test_clauses([compact_list,compose_list,unifiable_list,peel_rightmost,update_msw,hyphenate,replacement_name]).
+remove_empty([], []).
+remove_empty([[]|B], A) :-
+        remove_empty(B, A).
+remove_empty([A|B], [A|C]) :-
+        remove_empty(B, C).
+test_update_msw :-
+        retractall(values(_,_)),
+        update_msw(test, first_element),
+        values(test, [first_element]),
+        update_msw(test, [next,next_next]),
+        values(test, [[next,next_next],first_element]),
+        retractall(values(_,_)).
+test_compact_list :-
+        compact_list([[a],[b],[c],d,[e],[f]], [[a,b,c],d,[e,f]]).
+test_compose_list :-
+        compose_list((a,b,c), [a,b,c]).
+rhs_expansion(A, B, C) :-
+        expand_feature_list(A, B, C).
+read_rules(A, B) :-
+        read(A, C),
+        (   C==end_of_file ->
+            B=[]
+        ;   read_rules(A, D),
+            append([C], D, B)
+        ).
+sdcg_default_option(start_symbol, sdcg).
+sdcg_default_option(prism_file, 'generated_sdcg.psm').
+sdcg_default_option(debug, no).
+sdcg_set_option(A, B) :-
+        retractall(sdcg_user_option(A,_)),
+        assert(sdcg_user_option(A,B)).
+test_unifiable_list :-
+        unifiable_list(0, []),
+        unifiable_list(3, [A,B,C]),
+        var(A),
+        var(B),
+        var(C).
+test_expand_values :-
+        retractall(values(_,_)),
+        expand_values(test, 1, test_1_1),
+        expand_values(test, 1, test_1_2),
+        expand_values(test, 3, test_3_1),
+        retractall(values(_,_)).
+sdcg_option(A, B) :-
+        (   clause(sdcg_user_option(A,_), _) ->
+            sdcg_user_option(A, B)
+        ;   sdcg_default_option(A, B)
+        ).
+try_it :-
+        (sdcg(A)==>np(A)),
+        (np(A)==>det(A),noun(A)),
+        (np(A)==>noun(A)),
+        (noun(sg)==>[dog]),
+        (noun(pl)==>[dogs]),
+        (det(pl)==>[the]),
+        (det(sg)==>[the]),
+        sdcg_compile.
+test_peel_rightmost :-
+        peel_rightmost(a_1_1, [97,95,49], [49]),
+        peel_rightmost([97,95,49,95,49], [97,95,49], [49]).
+section(A) :-
+        nl,
+        write('%%%  '),
+        write(A),
+        write('  %%%'),
+        nl.
+peel_rightmost(A, B, C) :-
+        [95]=[D],
+        (   is_list(A) ->
+            E=A
+        ;   atom_codes(A, E)
+        ),
+        reverse(E, F),
+        append(G, H, F),
+        H=[D|_],
+        reverse(G, C),
+        append(B, [D|C], E), !.
+write_sdcg_start_rule :-
+        section('Start symbol'),
+        sdcg_start_definition(A/B),
+        listing(A/B),
+        unifiable_list(B, C),
+        D=..[A|C],
+        retractall(D),
+        retractall(sdcg_start_definition(_)).
+replacement_name(A, B, C, D) :-
+        hyphenate(A, B, E),
+        hyphenate(E, C, D).
+test_all :-
+        test_clauses(A),
+        test_run_tests(A).
+rewrite_start_rule(A, B) :-
+        sdcg_option(start_symbol, C),
+        (   clause(values(sdcg_start_definition,D), _) ->
+            throw(error(sdcg_start_symbol_already_defined(D)))
+        ;   true
+        ),
+        A=..[C|E],
+        append(E, [F,G], H),
+        I=..[C|H],
+        rewrite_rule_rhs(F, G, B, J),
+        K=..[':-',I,J],
+        assert(K),
+        functor(I, _, L),
+        assert(sdcg_start_definition(C/L)).
+test_hyphenate :-
+        hyphenate(first, second, first_second),
+        hyphenate(first_second, third, first_second_third).
+simulate_write_prism_program :-
+        open_null_stream(A),
+        write_prism_program(A).
+sdcg_parse(A) :-
+        sdcg_debug((write('Loading SDCG in '),write(A),nl)),
+        open(A, read, B),
+        ground(B),
+        read_rules(B, C),
+        compile_rules(C),
+        close(B).
+process_expanded_rules([]).
+process_expanded_rules([A|B]) :-
+        call(A),
+        process_expanded_rules(B).
+sdcg(A) :-
+        sdcg_parse(A), !,
+        sdcg_debug(listing),
+        sdcg_compile.
+sdcg_debug(A) :-
+        current_output(B),
+        set_output(user_output),
+        (   sdcg_option(debug, yes) ->
+            call(A)
+        ;   true
+        ),
+        set_output(B).
+remove_rule(A, B) :-
+        unifiable_list(B, C),
+        D=..[A|C],
+        (   clause(D, E) ->
+            retract((D:-E))
+        ;   throw(error(remove_rule(A/B))),
+            write(D),
+            nl
+        ).
+rewrite_rule(A, B) :-
+        functor(A, C, D),
+        A=..[C|E],
+        expand_values(C, D, F),
+        G=..[C,D],
+        values(G, H),
+        I=..[msw,G,J],
+        unifiable_list(D, K),
+        append(K, [L,M], N),
+        generate_selector(N, J, H, O),
+        P=(I,O),
+        append([C], N, Q),
+        R=..Q,
+        S=..[':-',R,P],
+        sdcg_debug((write('Selector Rule: '),write(S),nl)),
+        (   clause(R, T) ->
+            retract((R:-T))
+        ;   true
+        ),
+        assert(S),
+        append(E, [L,M], U),
+        V=..[F|U],
+        rewrite_rule_rhs(L, M, B, W),
+        X=..[':-',V,W],
+        sdcg_debug((write('Implementation Rule: '),write(X),nl)),
+        assert(X).
+test_replacement_name :-
+        replacement_name(funny_name, 3, 42, funny_name_3_42).
+sdcg_compile :-
+        sdcg_debug((write('compiling SDCG to PRISM program'),nl)),
+        sdcg_option(prism_file, A),
+        write_prism_program_to_file(A),
+        prism(A).
+remove_ground([], []).
+remove_ground([B|C], A) :-
+        remove_ground(C, D),
+        (   ground(B) ->
+            A=D
+        ;   append([B], D, A)
+        ).
+lhs_expansion(A, B, C) :-
+        A=..[_|D],
+        expand_feature_list(D, B, C).
+generate_consumes(A, B, [D], C) :-
+        C=..[consume,A,D,B].
+generate_consumes(A, B, [D|E], C) :-
+        generate_consumes(A, F, [D], G), !,
+        generate_consumes(F, B, E, H),
+        C=(G,H).
+is_list(A) :-
+        nonvar(A),
+        functor(A, '.', _).
+generate_selector(A, B, [D], C) :-
+        E=..['==',B,D],
+        append([D], A, F),
+        G=..F,
+        C=..['->',E,G].
+generate_selector(A, B, [D|E], C) :-
+        generate_selector(A, B, [D], F),
+        generate_selector(A, B, E, G),
+        C=..[';',F,G].
+list_to_clause([A], A).
+list_to_clause([A|B], (A,C)) :-
+        list_to_clause(B, C).
+expand_feature_list([], [], []).
+expand_feature_list([A|B], [C|D], [E|F]) :-
+        expand_feature(A, C, E),
+        expand_feature_list(B, D, F).
+is_code_block(A) :-
+        nonvar(A),
+        functor(A, '{}', _).
+expand_values(A, B, C) :-
+        D=..[A,B],
+        catch((values(D,E); true), _, true),
+        (   ground(E) ->
+            E=[F|_],
+            peel_rightmost(F, _, G),
+            number_codes(H, G),
+            I is H+1
+        ;   I=1
+        ),
+        replacement_name(A, B, I, C),
+        update_msw(D, C).
+hyphenate(A, B, C) :-
+        ground(A),
+        ground(B),
+        D=[95],
+        name(A, E),
+        name(B, F),
+        append(E, D, G),
+        append(G, F, H),
+        name(C, H).
+hyphenate(A, B, C) :-
+        ground(C),
+        peel_rightmost(C, D, E),
+        name(A, D),
+        name(B, E).
+is_composed(A) :-
+        functor(A, ',', _).
+compact_list([], []).
+compact_list([A], [A]).
+compact_list([B,C|D], A) :-
+        is_list(B),
+        is_list(C),
+        append(B, C, E),
+        compact_list([E|D], A).
+compact_list([B,C|D], A) :-
+        compact_list([C|D], E),
+        append([B], E, A).
+clause_to_list(A, [A]).
+clause_to_list((B,C), A) :-
+        (   functor(C, ',', 2) ->
+            clause_to_list(C, D),
+            A=[B|D]
+        ;   A=[B,C]
+        ).
+compose_list((A,B), [A|C]) :-
+        compose_list(B, C).
+compose_list(A, [A]).
+flatten_once([], []).
+flatten_once([[]|B], A) :-
+        flatten_once(B, A).
+flatten_once([[A|B]|C], [A|D]) :-
+        flatten_once(C, E),
+        append(B, E, D).
+expand_rule(A, B, C) :-
+        create_expansion_rule(A, B, D),
+        assert(D),
+        D=..[':-',E,_],
+        functor(E, F, _),
+        G=..[F,H],
+        setof(H, G, C),
+        retract(D).
+expand_feature(A, B, C) :-
+        (   nonvar(A),
+            functor(A, '@', 1) ->
+            A=..['@',B],
+            B=..[_|D],
+            remove_ground(D, C)
+        ;   B=[],
+            C=[A]
+        ).
+compile_rules([]).
+compile_rules([A|B]) :-
+        functor(A, C, D),
+        (   member([C,D], [['==>',2],[sdcg_set_option,2]]) ->
+            call(A)
+        ;   assert(A)
+        ),
+        compile_rules(B).
+consume([A|B], A, B).
+create_expansion_rule(A, B, C) :-
+        lhs_expansion(A, D, E),
+        flatten_once(E, F),
+        remove_empty(D, G),
+        clause_to_list(B, H),
+        write('rhs list'),
+        write(H),
+        nl,
+        rhs_expansion(H, I, J),
+        flatten_once(J, K),
+        remove_empty(I, L),
+        append(G, L, M),
+        functor(A, N, _),
+        append([N], F, O),
+        P=..['=..',Q,O],
+        list_to_clause(K, R),
+        S=..[=,T,R],
+        U=..['@=>',Q,T],
+        V=..[=,W,U],
+        X=[P,S,V],
+        append(M, X, Y),
+        list_to_clause(Y, Z),
+        A1=..[expander,W],
+        C=..[':-',A1,Z], !.
+assert_once(A) :-
+        (   not clause(A,_) ->
+            assert(A)
+        ;   true
+        ).
+dot :-
+        write('.').
+(A@=>B) :-
+        sdcg_debug((write('processing rule '),write(A),write(' ==> '),write(B),nl)),
+        compose_list(B, C),
+        compact_list(C, D),
+        sdcg_option(start_symbol, E),
+        (   functor(A, E, _) ->
+            sdcg_debug((write('this looks like a start rule'),nl)),
+            rewrite_start_rule(A, D)
+        ;   rewrite_rule(A, D)
+        ).
+(A==>B) :-
+        expand_rule(A, B, C),
+        process_expanded_rules(C).
+(A-=>B) :-
+        expand_rule(A, B, C),
+        process_expanded_rules(C).

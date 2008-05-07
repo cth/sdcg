@@ -8,9 +8,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :- op(1200, xfx, ==>).
+:- op(1200, xfx, @=>).
 
 :- dynamic sdcg_user_option/2.
 :- dynamic sdcg_start_definition/2.
+
+:- cl('../util/util.pl').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SDCG Options
@@ -31,9 +34,19 @@ sdcg_set_option(Opt,Val) :-
 % Clause translation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--->(LHS,RHS) :- ==>(LHS,RHS).
+%-->(LHS,RHS) :- ==>(LHS,RHS).
 
 ==>(LHS,RHS) :-
+	expand_rule(LHS,RHS,DerivedRules),
+	process_expanded_rules(DerivedRules).
+
+process_expanded_rules([]).
+process_expanded_rules([Rule|Rest]) :-
+	call(Rule),
+	process_expanded_rules(Rest).
+
+% @=> rules are considered expanded. Any special instructions are treated as normal constituents
+@=>(LHS,RHS) :-
 	sdcg_debug((write('processing rule '), write(LHS), write(' ==> '), write(RHS), nl)),
 	compose_list(RHS, RHS_L1),
 	compact_list(RHS_L1,RHS_L),
@@ -67,7 +80,6 @@ rewrite_rule(LHS,RHS) :-
 	functor(LHS,Name,Arity),
 	LHS =.. [ Name | Features],
 	expand_values(Name, Arity, NewName),
-
 	% Generate the selection rule, which stochastically selects
 	% which implementation rule to use.
 	MSW =.. [ Name, Arity ],
@@ -84,7 +96,6 @@ rewrite_rule(LHS,RHS) :-
 	% Remove old selector rule if there is one
 	(clause(NewLHS,OldBody) -> retract((NewLHS :- OldBody)); true),
 	assert(SelectorRule), % Add new Selector to database
-
 	% Generate the implementation rule with the name "NewName"
 	append(Features,[InList,OutList],NewFeatures),	
 	ImplRuleLHS =.. [ NewName | NewFeatures ],
@@ -109,10 +120,6 @@ generate_selector(Features, SwitchVariable, [SwitchValue|R], Selector) :-
 rewrite_rule_rhs(InOut,InOut,[R],Body) :-
 %	write('code block encountered'), write(R),nl,
 	R =.. [{},Body].
-
-% FIXME Tomorrow.
-%rewrite_rule(In,Out,[R],Body) :-
-%	R =.. [->,Clau]
 
 rewrite_rule_rhs(In, Out, [R], Body) :-
 	(is_list(R) ->
@@ -143,6 +150,71 @@ generate_consumes(In,Out,[T|R],Clauses) :-
 	generate_consumes(In,NextIn,[T],C1),!,
 	generate_consumes(NextIn,Out,R,CR),
 	Clauses = (C1, (CR)).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Feature expansion
+% expands rules prefixed with @
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Use the ExpanderRule to generate all derived rules
+expand_rule(LHS,RHS,Rules) :-
+	create_expansion_rule(LHS,RHS,ExpanderRule),
+	assert(ExpanderRule),
+	ExpanderRule =.. [ :-, Head, _ ],
+	functor(Head,ExpanderName,_),
+	ExpCall =.. [ ExpanderName, X ],
+	setof(X,ExpCall,Rules),
+	retract(ExpanderRule).
+
+create_expansion_rule(LHS,RHS,ExpRule) :-
+	% Extract LHS expanders:
+	lhs_expansion(LHS,LHSExpandersE,LHSVarsE),
+	flatten_once(LHSVarsE,LHSVars),
+	remove_empty(LHSExpandersE,LHSExpanders),
+	% Extract RHS expanders:
+	clause_to_list(RHS,RHSList),
+	rhs_expansion(RHSList,RHSExpandersE,RHSVarsE),
+	flatten_once(RHSVarsE,RHSVars),
+	remove_empty(RHSExpandersE,RHSExpanders),
+	% Join expanders:
+	append(LHSExpanders,RHSExpanders,Expanders),
+	% Create LHS rule creator:
+	functor(LHS,FuncLHS,_),
+	append([FuncLHS],LHSVars,NewLHS),
+	LHSAssignRule =.. [ =.. , R_LHS, NewLHS ],
+	% Create RHS rule creator:
+	list_to_clause(RHSVars,RHSClauses),
+	RHSAssignRule =.. [ =, R_RHS, RHSClauses ],
+	RuleRule =.. [ @=>, R_LHS, R_RHS ],
+	AssignRuleRule =.. [ =, R, RuleRule ],
+	AssignRules = [ LHSAssignRule,RHSAssignRule,AssignRuleRule],	
+	% Put together expansion rule:
+	append(Expanders,AssignRules,ExpRuleBodyList),
+	list_to_clause(ExpRuleBodyList,ExpRuleBody),	
+	ExpRuleHead =.. [ expander, R ],
+	ExpRule =.. [ :-, ExpRuleHead, ExpRuleBody ], !.
+
+lhs_expansion(LHS,Expanders,Vars) :-
+	LHS =.. [ _ | Features ],
+	expand_feature_list(Features,Expanders,Vars).
+	
+rhs_expansion(RHS,Expanders,Vars) :-
+	expand_feature_list(RHS,Expanders,Vars).
+
+expand_feature_list([],[],[]).
+expand_feature_list([Feature|R],[Expander|ER],[FVars|VR]) :-
+	expand_feature(Feature,Expander,FVars),
+	expand_feature_list(R,ER,VR).
+	
+expand_feature(Feature, Expander, NewFeatures) :-
+	((nonvar(Feature),functor(Feature,@,1)) ->
+		Feature =.. [ @ , Expander ],
+		Expander =.. [ _ | Args ],
+		remove_ground(Args,NewFeatures)
+		;
+		Expander = [],
+		NewFeatures = [ Feature ]
+	).
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Loading and compiling SDCG from file
@@ -280,39 +352,6 @@ section(S) :-
 % Utilities
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dot :- write('.').
-
-is_list(X) :- % doesn't work with empty lists %	
-	nonvar(X),
-	functor(X,'.',_).
-
-is_code_block(X) :-
-	nonvar(X),
-	functor(X, {}, _).
-
-is_composed(X) :-
-	functor(X, ',', _).
-
-unifiable_list(0,[]).
-unifiable_list(Len,[_A|L]) :-
-	NewLen is Len - 1,
-	unifiable_list(NewLen,L), !.
-
-compose_list((E1,E2), [E1|Rest]) :- compose_list(E2, Rest).
-compose_list(E, [E]).
-
-compact_list([],[]).
-compact_list([L],[L]).
-compact_list([L1,L2|Rest], CL) :-
-	is_list(L1), 
-	is_list(L2),
-	append(L1,L2,L3),
-	compact_list([L3|Rest],CL).
-compact_list([L1,L2|Rest],CL) :-
-	compact_list([L2|Rest],CL1),
-	append([L1],CL1,CL).
-
-
 % The argument clause is only called if sdcg_option(debug,yes).
 % Any write's from sdcg_debug goes to STDOUT, no matter current output stream
 sdcg_debug(Clause) :-
@@ -321,45 +360,6 @@ sdcg_debug(Clause) :-
 	(sdcg_option(debug,yes) -> call(Clause)
 	; true),
 	set_output(PreviousStream).
-
-% assert_once always succeds
-assert_once(C) :-
-	(not(clause(C,_)) -> assert(C) ; true).
-	replacement_name(Name, Arity, Number, NewName) :-
-	hyphenate(Name, Arity, N1),
-	hyphenate(N1,Number,NewName).
-
-% Stitch together the first tree arguments
-% as the fourth: eg. 
-% hyphenate(noun, 3, 2, noun_3_2) => true
-hyphenate(First, Second, Hyphenated) :-
-	ground(First),
-	ground(Second),
-	Hyphen = "_",
-	name(First, FirstList),
-	name(Second, SecondList),
-	append(FirstList, Hyphen, L1),
-	append(L1, SecondList, L2),
-	name(Hyphenated, L2).
-
-% Hyphenate also works in the opposite direction
-% Eg. hyphenate(O,A,N,noun_3_2)	 => O=noun, A=3, N=2
-hyphenate(First,Second,Hyphenated) :-
-	ground(Hyphenated),
-	peel_rightmost(Hyphenated, FirstList, SecondList),
-	name(First,FirstList),
-	name(Second,SecondList).
-
-% Peels of the rightmost hyphen and arg
-% eg. peel("test_1_2", "test_1", "2") => true
-peel_rightmost(Input, Rest, Arg) :-
-	"_" = [ Hyphen ],
-	(is_list(Input) -> InputCodes = Input ; atom_codes(Input, InputCodes)),
-	reverse(InputCodes,Reversed),
-	append(A,B,Reversed),
-	B = [ Hyphen | _], 
-	reverse(A,Arg),
-	append(Rest,[ Hyphen | Arg],InputCodes), !.
 
 expand_values(Name, Arity, NewName) :-
 	MSW =.. [Name, Arity],
@@ -386,8 +386,8 @@ update_msw(Name, Value) :-
 		retract(values(Name,_)),
 		NewValues = [Value|L],
 		assert(values(Name,NewValues))).
-	% consume/3 is referenced by the generated program
 
+% consume/3 is referenced by the generated program
 consume([Token|R],Token, R).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -403,88 +403,3 @@ try_it :-
 	(det(pl) ==> [the]),
 	(det(sg) ==> [the]),
 	sdcg_compile.
-	
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Some unit tests
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Ideally we would build this automatically, but clause(X,_) doesn't work in BProlog :-(
-test_clauses([	compact_list, compose_list, unifiable_list, peel_rightmost,
-				update_msw, hyphenate, replacement_name ]).
-
-test_all :-
-	test_clauses(ClauseList),
-	test_run_tests(ClauseList).
-	
-test_run_tests([]) :- write('Finished running tests'), nl.
-test_run_tests([Clause|R]) :-
-	atom_codes(Clause,ClauseName),
-	append("test_", ClauseName, TestCaseName),
-	atom_codes(TestCaseClause, TestCaseName),
-	(clause(TestCaseClause,_) ->
-		write('Running test: '), write(TestCaseClause), write(' - '),
-		(call(TestCaseClause) -> write('OK') ; write('Failed'))
-	;
-		write('No test defined for clause: '), write(Clause)
-	),
-	nl,
-	test_run_tests(R).
-
-test_compact_list :-
-	compact_list([[a],[b],[c],d,[e],[f]],[[a,b,c],d,[e,f]]).
-
-test_compose_list :-
-	compose_list((a,(b,c)),[a,b,c]).
-	
-test_unifiable_list :-
-	unifiable_list(0,[]),
-	unifiable_list(3,[X,Y,Z]),
-	var(X), var(Y), var(Z).
-	
-test_peel_rightmost :-
-	peel_rightmost(a_1_1,[97,95,49],[49]),
-	peel_rightmost("a_1_1",[97,95,49],[49]).
-	
-test_hyphenate :-
-	hyphenate(first, second, first_second),
-	hyphenate(first_second, third, first_second_third).
-	
-test_replacement_name :-
-	replacement_name(funny_name, 3, 42, funny_name_3_42).
-
-% update_msw should work like queue, last inserted item in front
-test_update_msw :-
-	retractall(values(_,_)), % setup
-	update_msw(test, first_element),
-	values(test,[first_element]),
-	update_msw(test, [next,next_next]),
-	values(test,[[next,next_next],first_element]),
-	retractall(values(_,_)). % teardown
-	
-test_expand_values :-
-	retractall(values(_,_)),
-	expand_values(test,1,test_1_1),
-	expand_values(test,1,test_1_2),
-	expand_values(test,3,test_3_1),
-	retractall(values(_,_)).
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Known bugs
-% 
-% 6. Doesn't support (a -> b, c) syntax yet.
-%
-% 7. Write detailed set of test cases.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Other stuff:
-/*
-Consider again the difference between terminals and nonterminals:
-To see the problem consider this grammar:
-a ==> b, noun
-a ==> b, [dog]
-noun ==> [dog]
-
-It's really the same difference! But we cannot know for sure, I think.
-It's what i'm generating now actually a lexicalized model????
-*/
