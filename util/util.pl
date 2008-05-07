@@ -120,3 +120,35 @@ write_list([]).
 write_list([E|Rest]) :-
 	write(E),nl,
 	write_list(Rest).
+	
+% Given a list of argument, add_functor will
+% create a term from the functor and argument list
+add_functor(_,[],[]).
+add_functor(F,[E|R],[Functorized|FunctorizedRest]) :-
+	Functorized =.. [ F | E ],
+	add_functor(F,R,FunctorizedRest).
+
+combine([L], L).
+combine([L1,L2],Combined) :-
+        combine_two(L1,L2,Combined).
+combine([L1,L2|R], Combined) :-
+        combine(R,CR),
+        combine_two(L1,L2,C1),
+		combine_two(C1,CR,Combined), !.
+
+combine_two([],_,[]).
+combine_two(_,[],[]).
+combine_two([E1],[E2], Combined) :-
+	append(E1,E2,C),
+	Combined = [ C ].
+combine_two([E1|R1], [E2|R2], Combined) :-
+	combine_two([E1],[E2],C),
+	combine_two(R1,[E2|R2], CombLeft),
+	combine_two([E1|R1],R2, CombRight),
+	union(C,CombLeft,C1),
+	union(C1,CombRight,Combined).
+
+% True is the two sets are equal
+set_equal(Set1,Set2) :-
+	subtract(Set1,Set2,[]).
+
