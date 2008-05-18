@@ -1,0 +1,6 @@
+compiler/*.out
+grammars/*.out
+misc/*.out
+misc/temp*
+test/*.out
+util/*.out

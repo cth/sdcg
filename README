@@ -1,2 +1,14 @@
 Stochastic Definite Clause Grammars
 ===================================
+
+Files:
+compiler/
+	Contains the code of the SDCG compiler
+util/
+	Contains various utilities of used by the compiler
+test/
+	Contains unit-tests for the compiler
+misc/
+	Various stuff
+grammars/
+	Some example grammars

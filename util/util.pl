@@ -18,7 +18,13 @@ is_code_block(X) :-
 % Test if clause has multiple constituents
 is_composed(X) :-
 	functor(X, ',', _).
-
+	
+atom_append(Atom1,Atom2,Atom3) :-
+	atom_codes(Atom1,A1Codes),
+	atom_codes(Atom2,A2Codes),
+	append(A1Codes,A2Codes,A3Codes),
+	atom_codes(Atom3,A3Codes).
+	
 % Create a list of unground vars, which can subsequently be used
 % to unify with something.
 unifiable_list(0,[]).
@@ -26,8 +32,9 @@ unifiable_list(Len,[_A|L]) :-
 	NewLen is Len - 1,
 	unifiable_list(NewLen,L), !.
 
-compose_list((E1,E2), [E1|Rest]) :- compose_list(E2, Rest).
-compose_list(E, [E]).
+% Converts a clause to a list of rules
+clause_to_list((E1,E2), [E1|Rest]) :- clause_to_list(E2, Rest).
+clause_to_list(E, [E]).
 
 compact_list([],[]).
 compact_list([L],[L]).
@@ -105,7 +112,8 @@ list_to_clause([E],(E)).
 list_to_clause([E|L],(E,ClauseRest)) :-
 	list_to_clause(L,ClauseRest).
 
-% Converts a clause to a list of rules
+
+/* defunct
 clause_to_list(A,[A]).
 clause_to_list((A,B),L) :-
 	(functor(B,',',2) ->
@@ -114,6 +122,7 @@ clause_to_list((A,B),L) :-
 	;
 		L = [A,B]
 	).
+*/
 
 % Outputs each element of a list on a separate line
 write_list([]).

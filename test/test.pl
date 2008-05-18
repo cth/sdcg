@@ -2,7 +2,10 @@
 % Unit tests for the SDCG compiler 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:-cl('../compiler/sdcg.pl').
+:-cl('../compiler/sdcg.pl'). % Why doesn't load operator definition from this??
+:- op(1200, xfx, ==>).
+:- op(1200, xfx, @=>).
+
 :- run.
 		
 run :-
@@ -19,7 +22,7 @@ run_test_rules([Rule|Rest]) :-
 		(functor(Head, F, 0) ->
 			atom_codes(F,FList),
 			(append("test_", _, FList) -> 
-				write('Running test: '), write(F), write(' - '),
+				write(F), write(' - '),
 				(call(Head) -> write('OK') ; write('Failed')),
 				nl
 				; true)	; true) ; true),
@@ -28,8 +31,11 @@ run_test_rules([Rule|Rest]) :-
 test_compact_list :-
 	compact_list([[a],[b],[c],d,[e],[f]],[[a,b,c],d,[e,f]]).
 
-test_compose_list :-
-	compose_list((a,(b,c)),[a,b,c]).
+test_clause_to_list :-
+	clause_to_list((a,(b,c)),[a,b,c]).
+	
+test_atom_append :-
+	atom_append(abc,def,abcdef).
 	
 test_unifiable_list :-
 	unifiable_list(0,[]),
@@ -56,11 +62,11 @@ test_update_msw :-
 	values(test,[[next,next_next],first_element]),
 	retractall(values(_,_)). % teardown
 	
-test_expand_values :-
+test_expand_msw :-
 	retractall(values(_,_)),
-	expand_values(test,1,test_1_1),
-	expand_values(test,1,test_1_2),
-	expand_values(test,3,test_3_1),
+	expand_msw(test,1,test_1_1),
+	expand_msw(test,1,test_1_2),
+	expand_msw(test,3,test_3_1),
 	retractall(values(_,_)).
 	
 test_combine_two :-
@@ -80,5 +86,66 @@ test_remove_ground :-
 	remove_ground([X,y], [X]),
 	remove_ground([y,X], [X]),
 	remove_ground([X,y,Z],[X,Z]).
+	
+test_regex_rule_head :-
+	regex_rule_head(star,test(a,b,c),sdcg_regex_star_test(a,b,c)).
+	
+test_regex_rule :-
+	regex_rule_none(_,test,(test@=>[])),
+	regex_rule_one(test,newtest,(newtest@=>test)),
+	regex_rule_kleene(_,test,(test@=>test,test)).
 
+test_generate_regex_rules :-
+	generate_regex_rules(star, test(a,X,b),NewC, [regex_rule_none, regex_rule_one, regex_rule_kleene], Rules),
+	NewC == (sdcg_regex_star_test(a,X,b)),
+	Rules == [ 
+		(sdcg_regex_star_test(a,X,b)@=>[]),
+		(sdcg_regex_star_test(a,X,b)@=>test(a,X,b)),
+		(sdcg_regex_star_test(a,X,b)@=>sdcg_regex_star_test(a,X,b),sdcg_regex_star_test(a,X,b))
+	].
 
+test_expand_constituent :-
+	% Test star operator:
+	expand_constituent(*(a(b,V1)),NewC1,Rules1),
+	NewC1 = (sdcg_regex_star_a(b,V1)),
+	Rules1 == [	
+		(sdcg_regex_star_a(b,V1)@=>[]),
+		(sdcg_regex_star_a(b,V1)@=>a(b,V1)),
+		(sdcg_regex_star_a(b,V1)@=>sdcg_regex_star_a(b,V1),sdcg_regex_star_a(b,V1))
+	].
+	
+test_resolve_expand_mode :-
+	% setup 
+	assert(number(he,sg)),
+	assert(expand_mode(number(-,+))),
+	% test:
+	Expander =.. [ number, X, Y ],
+	resolve_expand_mode(Expander, ModeList),
+	%       write(ModeList),nl,
+	ModeList == [-,+], % correctness assertion
+	% cleanup
+	retract(number(he,sg)),
+	retract(expand_mode(number(-,+))).
+
+test_arg_expand_list :-
+        % setup 
+        assert(word(he,sg,masc)),
+        assert(expand_mode(word(-,+,+))),
+        % test:
+        Args = [ a,b,c ],
+        Expander =.. [ word | Args ],
+        resolve_expand_mode(Expander, ModeList),
+        arg_expand_list(Args, ModeList,NewArgList),
+		NewArgList == [b,c],
+        % cleanup
+        retract(word(he,sg,masc)),
+        retract(expand_mode(word(-,+,+))).
+
+test_expand_asserted_set :-
+	expand_asserted_set(myset,a1),
+	expand_asserted_set(myset,a2),
+	expand_asserted_set(myset,a2),
+	expand_asserted_set(myset,a3),
+	myset(Set),
+	set_equal(Set,[a1,a2,a3]),
+	retract(myset(Set)).

@@ -1,0 +1,16 @@
+TODO
+====
+
+FOC compilation:
+- Implement all rules with a "rule" clause, where the implementation rule is matched 
+- Get rid of consume. replace consume/3 replaced by "in-rule" consumption.
+	- This might be trouble some for rules like "s ==> [a], [b]" or worse "s ==> [a], b, [c]".
+
+- Test cases for all rules not currently being tested
+
+- Example grammars
+	- Lexical grammar (using @ expansions)
+	- General purpose, wide-coverage english grammar
+- Some way (syntax) of setting the probability when defining rules
+
+

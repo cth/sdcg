@@ -1,0 +1,61 @@
+%%% FOC directives %%%
+%delay_unifiability_check(yes).
+%distribute_disjunction(yes).
+%built_in_mode(rule(+,-,+,-,+)).
+
+%%%  PRISM directives  %%%
+target(failure,0).
+failure :-
+        not(success).
+success :-
+        sdcg(_, []).
+data(user).
+
+%%%  MSW declarations  %%%
+values(s(0), [s_0_2,s_0_1]).
+values(a(1), [a_1_2,a_1_1]).
+
+%%%  Start symbol  %%%
+sdcg(A, B) :-
+        s(A, B, 0).
+
+%%%  Non-terminals  %%%
+s(A, B, C) :-
+        incr_depth(C, D),
+        msw(s(0), E),
+	rule(E,A,B,D).
+
+rule(s_0_1,A, B, C) :-
+        a(D, A, E, C),
+        a(D, E, B, C).
+
+rule(s_0_2,A, B, C) :-
+        s(A, B, C).
+
+a(A, B, C, D) :-
+        incr_depth(D, E),
+        msw(a(1), F),
+	rule(F,A,B,C,E).
+
+rule(a_1_1, a, A, B, _) :-
+	A = [ a | B ].
+%	consume(A, a, B).
+
+rule(a_1_2, b, A, B, _) :-
+	A = [ b | B ].
+%        consume(A, b, B).
+
+consume([A|B], A, B).
+
+%consume(AB,A,B) :-
+%	ap([A],B,AB).
+
+incr_depth(A, B) :-
+        integer(A),
+        B is A+1,
+        B<20.
+
+%fo_sort(ap(list,list,list)).
+%ap([],Y,Y).
+%ap([H|X],Y,[H|Z]):- ap(X,Y,Z).
+
