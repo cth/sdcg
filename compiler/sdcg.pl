@@ -395,6 +395,9 @@ compile_rules([X|R]) :-
 % Generate a prism program from the asserted clauses
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+section(S) :-
+	nl,write('%%%  '),write(S),write('  %%%'),nl.
+
 sdcg_compile :-
 	sdcg_debug((write('compiling SDCG to PRISM program'),nl)),
 	sdcg_option(prism_file, OutFile),
@@ -438,6 +441,7 @@ write_prism_program(Stream) :-
 	retractall(sdcg_implementation_rules(_)),
 	section('Utilities:'),
 	write_consume,
+	write_mysterious_all,
 	write_incr_depth,
 	section('User defined'),
 	listing,
@@ -488,12 +492,16 @@ write_consume :-
 	Clause =.. [ :-, Head, Body ],
 	portray_clause(Clause).
 	
+write_mysterious_all :-
+	Head =.. [ all, [B], cont(A,B) ],
+	Body =.. [ cont, A, B ],
+	Clause =.. [ :-, Head, Body ],
+	portray_clause(Clause).
+	
+
 write_incr_depth :-
 	create_incr_depth(R),
 	portray_clause(R).
-
-section(S) :-
-	nl,write('%%%  '),write(S),write('  %%%'),nl.
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Utilities
@@ -545,6 +553,21 @@ expand_asserted_set(Name, NewValue) :-
 		NewClause =.. [ Name, NewValues ]
 	),
 	assert(NewClause).
+	
+	
+verify :-
+	prob(failure,F),
+	prob(success,S),
+	Total is S+F,
+	write('Probability of succes: '),
+	write(S),
+	nl,
+	write('Probability of failure: '),
+	write(F),
+	nl,
+	write('In total (should be 1): '),
+	write(Total),
+	nl.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test stuff
