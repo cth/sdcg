@@ -3,7 +3,7 @@ Stochastic Definite Clause Grammars
 
 SDCG is a compiler which compiles from an extended version of Prologs
 DCG syntax to a stochastic program expressed using the amazing PRISM
-system.
+system (http://sato-www.cs.titech.ac.jp/prism/).
 
 It is intended to be used for natural language parsing which requires
 something a bit more expressive than stochastic context-free grammars.
