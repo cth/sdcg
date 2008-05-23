@@ -1,0 +1,5 @@
+Applications that would be interesting writing using the grammar:
+
+- Grammar checker  (corrector)
+- Stochastic use case grammars
+- Mini stochastic ruby for instance

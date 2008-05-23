@@ -1,0 +1,7 @@
+# Stochastic Ruby
+# It should accept a subset of the normal Ruby syntax 
+# Maybe, I should use the antlr grammar as reference.
+
+Interesting examples:
+
+unless blah if not blah then kk3kdd 
