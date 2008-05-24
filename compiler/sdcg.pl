@@ -493,11 +493,10 @@ write_consume :-
 	portray_clause(Clause).
 	
 write_mysterious_all :-
-	Head =.. [ all, [B], cont(A,B) ],
+	Head =.. [ all, [A], cont(A,B) ],
 	Body =.. [ cont, A, B ],
 	Clause =.. [ :-, Head, Body ],
 	portray_clause(Clause).
-	
 
 write_incr_depth :-
 	create_incr_depth(R),
@@ -553,7 +552,6 @@ expand_asserted_set(Name, NewValue) :-
 		NewClause =.. [ Name, NewValues ]
 	),
 	assert(NewClause).
-	
 	
 verify :-
 	prob(failure,F),

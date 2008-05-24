@@ -3,3 +3,26 @@ Applications that would be interesting writing using the grammar:
 - Grammar checker  (corrector)
 - Stochastic use case grammars
 - Mini stochastic ruby for instance
+
+Unification:
+- Let's assume that a feature does not unify. Eg. number between an NP and VP isn't the same. I would 
+be nice with a generative approach to generating rules for capturing this:
+eg. we get two rules:
+
+s ==> np(Num1), vp(Num2), { Num1 \== Num2 }.
+s ==> np(Num1), vp(Num2), { Num1 == Num2 }.
+
+Of course, we would get 2^Features rules for each rule then.
+And how about head features:
+
+s(Num) ==> np(Num1), vp(Num2), { Num1 \== Num2, Num = Num1 }.
+s(Num) ==> np(Num1), vp(Num2), { Num1 \== Num2, Num = Num2 }.
+s(Num) ==> np(Num1), vp(Num2), { Num1 == Num2, Num = Num1 }.
+
+How would probabilities then be assigned? Well, since the prob of s(Num) would depend on the
+number of occurrences in the training corpus where the Num features didn't match and s(Num).
+If s(Num) doesn't need to unify with anything else it would be 50/50.
+
+The amazing thing about this is that PRISMN would not have to be used since there are no failures
+in the generative model!
+
