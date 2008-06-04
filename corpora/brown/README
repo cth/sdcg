@@ -1,0 +1,9 @@
+The brown corpus here is an prolog adaptation of the Bergen
+version of the Corpus. The brown_corpus_whole.pl contains
+the whole corpus, but unfortunately Bprolog doesn't like 
+compiling this big a file. So I have split the file in to
+parts as well. These are located in the parts/ directory.
+the file brown_parts.pl compiles each of these parts. 
+On my computer (Macbook pro), it takes around a minute 
+to compile all the files, so be patient... 
+

@@ -1,0 +1,1069 @@
+<HTML>
+
+<HEAD>
+<TITLE>The Brown Corpus Tag-set</TITLE>
+</HEAD>
+
+
+<h2 align=center><img src="logo.gif" alt="" border=0 height=114 width=108 align=center>Automatic
+Mapping Among Lexico-Grammatical Annotation Models (AMALGAM) 
+<br></h2>
+<center><p>
+<br><img src="nufrac8.gif" border=0 height=15 width=400></p></center>
+
+<center><p>
+<br>
+<br><a href="../amalgam/amalghome.htm"><img src="home2.gif" alt="AMALGAM Home Page" border=2 height=40 width=40></a><a href="tagmenu.html"><img src="return.gif" alt="Previous Page" border=2 height=40 width=40></a><a href="tagmenu.html"><img src="up2.gif" alt="Up A Level" border=2 height=40 width=40></a><a href="ice.html"><img src="more.gif" alt="Next Page" border=2 height=40 width=40></a></p></center>
+
+<center><p><a href="../amalgam/amalghome.htm">AMALGAM HOMEPAGE</a> | <a href="tagmenu.htmll">PREVIOUS
+PAGE</a> | <a href="tagmenu.html">UP A LEVEL</a> | <a href="ice.html">NEXT
+PAGE </a>
+<br></p></center>
+
+<h2 align=center>The Brown Corpus Tag-set</H2>
+
+<P> Listed alphabetically below are the complete set of tags used in the Brown
+corpus.  Each tag has examples of the tokens that were annotated with that tag.
+The examples are taken directly from the Brown corpus.  
+
+
+<P>
+Unlike some of the
+other tag-sets handled by the AMALGAM tagger Brown uses `combined tags' for
+word such as <STRONG>won't</STRONG> (MD*) and <STRONG>I'd</STRONG>
+(PPSS+HVD).  Combined tags come in only these two forms.  Either negated words
+have an asterisk appended after their tag or the plus symbol separates the
+tags for the different tokens that make up the complete combined word.  This
+makes it a trivial task to split combined tags. AMALGAM's version of the Brown
+tagger annotates with combined tags only if the tokeniser is switched off.
+This is done on the e-mail server by appending "notoken" to the start of the
+subject line of the e-mail message.  If the tokeniser is used the combined
+words are split into their constituent parts and the tags applied to each
+part.  So, <STRONG>won't</STRONG> (MD*) becomes <STRONG>will</STRONG> (MD)
+plus <STRONG>n't</STRONG> (*) and <STRONG>I'd</STRONG> (PPSS+HVD) becomes
+
+<STRONG>I</STRONG> (PPSS) plus <STRONG>'d</STRONG> (HVD). 
+
+<P>
+If the list of examples ends with an ellipsis marker then the tag category 
+can be assumed to be an open class.
+
+<P>
+<A HREF="http://nora.hd.uib.no/browninfo.html"> Further information on the
+Brown corpus </A> can be found at <A HREF="http://nora.hd.uib.no/corpora.html">
+the International Computer Archive of Modern English (ICAME)</A> corpus 
+collection.
+
+
+<P>
+Further reading:
+<DL>
+  <DD> Greene, B.B. & G.M. Rubin. 1981. Automatic grammatical tagging of 
+       English. Providence, R.I.: Department of Linguistics, Brown University. 
+</DL>
+
+<P>
+<TABLE SPACING=700 BORDER=4>
+<TR ALIGN=top> 
+	<TD> <CENTER> <STRONG>Tag</STRONG> </CENTER></STRONG> </CENTER>
+	<TD WIDTH = 200> <CENTER> <STRONG>Description</STRONG> </CENTER>
+	<TD WIDTH = 450> <CENTER> <STRONG>Examples</STRONG> <CENTER> </TR> <TR> </TD>
+</TR> 
+
+</TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> ( </STRONG> </CENTER>
+
+<TD WIDTH = 200> opening parenthesis
+<TD WIDTH = 450> (
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> ) </STRONG> </CENTER>
+<TD WIDTH = 200> closing parenthesis
+<TD WIDTH = 450> )
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> * </STRONG> </CENTER>
+<TD WIDTH = 200> negator
+<TD WIDTH = 450> not n't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> , </STRONG> </CENTER>
+
+<TD WIDTH = 200> comma
+<TD WIDTH = 450> ,
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> -- </STRONG> </CENTER>
+<TD WIDTH = 200> dash
+<TD WIDTH = 450> --
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> . </STRONG> </CENTER>
+<TD WIDTH = 200> sentence terminator
+<TD WIDTH = 450> . ? ; ! :
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> : </STRONG> </CENTER>
+
+<TD WIDTH = 200> colon
+<TD WIDTH = 450> :
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> ABL </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun, pre-qualifier
+<TD WIDTH = 450> quite such rather
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> ABN </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun, pre-quantifier
+<TD WIDTH = 450> all half many nary
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> ABX </STRONG> </CENTER>
+
+<TD WIDTH = 200> determiner/pronoun, double conjunction or pre-quantifier
+<TD WIDTH = 450> both
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> AP </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun, post-determiner
+<TD WIDTH = 450> many other next more last former little several enough
+                 most least only very few fewer past same Last latter
+                 less single plenty 'nough lesser certain various manye
+                 next-to-last particular final previous present nuf
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> AP$ </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun, post-determiner, genitive
+<TD WIDTH = 450> other's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> AP+AP </STRONG> </CENTER>
+
+<TD WIDTH = 200> determiner/pronoun, post-determiner, hyphenated pair
+<TD WIDTH = 450> many-much
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> AT </STRONG> </CENTER>
+<TD WIDTH = 200> article
+<TD WIDTH = 450> the an no a every th' ever' ye
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BE </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", infinitive or imperative
+<TD WIDTH = 450> be
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BED </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to be", past tense, 2nd person singular or all
+                 persons plural
+<TD WIDTH = 450> were
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BED* </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", past tense, 2nd person singular or all
+                 persons plural, negated
+<TD WIDTH = 450> weren't
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEDZ </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", past tense, 1st and 3rd person singular
+<TD WIDTH = 450> was
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEDZ* </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to be", past tense, 1st and 3rd person singular, negated
+<TD WIDTH = 450> wasn't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEG </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", present participle or gerund
+<TD WIDTH = 450> being
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEM </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", present tense, 1st person singular
+<TD WIDTH = 450> am
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEM* </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to be", present tense, 1st person singular, negated
+<TD WIDTH = 450> ain't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEN </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", past participle
+<TD WIDTH = 450> been
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BER </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", present tense, 2nd person singular or all
+                 persons plural
+<TD WIDTH = 450> are art
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BER* </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to be", present tense, 2nd person singular or all
+                 persons plural, negated
+<TD WIDTH = 450> aren't ain't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", present tense, 3rd person singular
+<TD WIDTH = 450> is
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> BEZ* </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to be", present tense, 3rd person singular, negated
+<TD WIDTH = 450> isn't ain't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> CC </STRONG> </CENTER>
+
+<TD WIDTH = 200> conjunction, coordinating
+<TD WIDTH = 450> and or but plus & either neither nor yet 'n' and/or minus an'
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> CD </STRONG> </CENTER>
+<TD WIDTH = 200> numeral, cardinal
+<TD WIDTH = 450> two one 1 four 2 1913 71 74 637 1937 8 five three million
+                 87-31 29-5 seven 1,119 fifty-three 7.5 billion hundred 125,000
+                 1,700 60 100 six ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> CD$ </STRONG> </CENTER>
+<TD WIDTH = 200> numeral, cardinal, genitive
+<TD WIDTH = 450> 1960's 1961's .404's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> CS </STRONG> </CENTER>
+
+<TD WIDTH = 200> conjunction, subordinating
+<TD WIDTH = 450> that as after whether before while like because if since for
+                 than altho until so unless though providing once lest s'posin'
+                 till whereas whereupon supposing tho' albeit then so's 'fore
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DO </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to do", uninflected present tense, infinitive or 
+                 imperative
+<TD WIDTH = 450> do dost
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DO* </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to do", uninflected present tense or imperative, negated
+<TD WIDTH = 450> don't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DO+PPSS </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to do", past or present tense + pronoun, personal, 
+                 nominative, not 3rd person singular
+<TD WIDTH = 450> d'you
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DOD </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to do", past tense
+<TD WIDTH = 450> did done
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DOD* </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to do", past tense, negated
+<TD WIDTH = 450> didn't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DOZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to do", present tense, 3rd person singular
+<TD WIDTH = 450> does
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DOZ* </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to do", present tense, 3rd person singular, negated
+<TD WIDTH = 450> doesn't don't
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DT </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun, singular
+<TD WIDTH = 450> this each another that 'nother
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DT$ </STRONG> </CENTER>
+
+<TD WIDTH = 200> determiner/pronoun, singular, genitive
+<TD WIDTH = 450> another's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DT+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun + verb "to be", present tense, 3rd person 
+                 singular
+<TD WIDTH = 450> that's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DT+MD </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun + modal auxillary
+<TD WIDTH = 450> that'll this'll
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DTI </STRONG> </CENTER>
+
+<TD WIDTH = 200> determiner/pronoun, singular or plural
+<TD WIDTH = 450> any some
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DTS </STRONG> </CENTER>
+<TD WIDTH = 200> determiner/pronoun, plural
+<TD WIDTH = 450> these those them
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DTS+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, plural + verb "to be", present tense, 3rd person 
+                 singular
+<TD WIDTH = 450> them's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> DTX </STRONG> </CENTER>
+
+<TD WIDTH = 200> determiner, pronoun or double conjunction
+<TD WIDTH = 450> neither either one
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> EX </STRONG> </CENTER>
+<TD WIDTH = 200> existential there
+<TD WIDTH = 450> there
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> EX+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> existential there + verb "to be", present tense, 3rd person 
+                 singular
+<TD WIDTH = 450> there's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> EX+HVD </STRONG> </CENTER>
+
+<TD WIDTH = 200> existential there + verb "to have", past tense
+<TD WIDTH = 450> there'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> EX+HVZ </STRONG> </CENTER>
+<TD WIDTH = 200> existential there + verb "to have", present tense, 3rd person 
+                 singular
+<TD WIDTH = 450> there's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> EX+MD </STRONG> </CENTER>
+<TD WIDTH = 200> existential there + modal auxillary
+<TD WIDTH = 450> there'll there'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-* </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: negator
+<TD WIDTH = 450> pas non ne
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-AT </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: article
+<TD WIDTH = 450> la le el un die der ein keine eine das las les Il
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-AT+NN </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: article + noun, singular, common
+<TD WIDTH = 450> l'orchestre l'identite l'arcade l'ange l'assistance l'activite
+                 L'Universite l'independance L'Union L'Unita l'osservatore
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-AT+NP </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: article + noun, singular, proper
+<TD WIDTH = 450> L'Astree L'Imperiale
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-BE </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: verb "to be", infinitive or imperative
+<TD WIDTH = 450> sit
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-BER </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: verb "to be", present tense, 2nd person singular or all persons plural
+<TD WIDTH = 450> sind sunt etes
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-BEZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: verb "to be", present tense, 3rd person singular
+<TD WIDTH = 450> ist est
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-CC </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: conjunction, coordinating
+<TD WIDTH = 450> et ma mais und aber och nec y
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-CD </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: numeral, cardinal
+<TD WIDTH = 450> une cinq deux sieben unam zwei
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-CS </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: conjunction, subordinating
+<TD WIDTH = 450> bevor quam ma
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-DT </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: determiner/pronoun, singular
+<TD WIDTH = 450> hoc
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-DT+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: determiner + verb "to be", present tense, 3rd 
+                 person singular
+<TD WIDTH = 450> c'est
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-DTS </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: determiner/pronoun, plural
+<TD WIDTH = 450> haec
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-HV </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: verb "to have", present tense, not 3rd person 
+                 singular
+<TD WIDTH = 450> habe
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-IN </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: preposition
+<TD WIDTH = 450> ad de en a par con dans ex von auf super post sine
+sur sub avec per inter sans pour pendant in di
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-IN+AT </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: preposition + article
+<TD WIDTH = 450> della des du aux zur d'un del dell'
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-IN+NN </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: preposition + noun, singular, common
+<TD WIDTH = 450> d'etat d'hotel d'argent d'identite d'art
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-IN+NP </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: preposition + noun, singular, proper
+<TD WIDTH = 450> d'Yquem d'Eiffel
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-JJ </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: adjective
+<TD WIDTH = 450> avant Espagnol sinfonica Siciliana Philharmonique grand
+publique haute noire bouffe Douce meme humaine bel serieuses
+royaux anticus presto Sovietskaya Bayerische comique schwarzen ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-JJR </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: adjective, comparative
+<TD WIDTH = 450> fortiori
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-JJT </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: adjective, superlative
+<TD WIDTH = 450> optimo
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-NN </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: noun, singular, common
+<TD WIDTH = 450> ballet esprit ersatz mano chatte goutte sang
+Fledermaus oud def kolkhoz roi troika canto boite blutwurst
+carne muzyka bonheur monde piece force ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-NN$ </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: noun, singular, common, genitive
+<TD WIDTH = 450> corporis intellectus arte's dei aeternitatis senioritatis 
+                 curiae patronne's chambre's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-NNS </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: noun, plural, common
+<TD WIDTH = 450> al culpas vopos boites haflis kolkhozes augen tyrannis 
+                 alpha-beta-gammas metis banditos rata phis negociants crus 
+                 Einsatzkommandos kamikaze wohaws sabinas zorrillas palazzi 
+                 engages coureurs corroborees yori Ubermenschen ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-NP </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: noun, singular, proper
+<TD WIDTH = 450> Karshilama Dieu Rundfunk Afrique Espanol Afrika Spagna Gott
+                 Carthago deus
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-NPS </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: noun, plural, proper
+<TD WIDTH = 450> Svenskarna Atlantes Dieux
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-NR </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: noun, singular, adverbial
+<TD WIDTH = 450> heute morgen aujourd'hui hoy
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-OD </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: numeral, ordinal
+<TD WIDTH = 450> 18e 17e quintus
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PN </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: pronoun, nominal
+<TD WIDTH = 450> hoc
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PP$ </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: determiner, possessive
+<TD WIDTH = 450> mea mon deras vos
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PPL </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: pronoun, singular, reflexive
+<TD WIDTH = 450> se
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PPL+VBZ </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: pronoun, singular, reflexive + verb, present 
+                 tense, 3rd person singular
+<TD WIDTH = 450> s'excuse s'accuse
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PPO </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, accusative
+<TD WIDTH = 450> lui me moi mi
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PPO+IN </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: pronoun, personal, accusative + preposition
+<TD WIDTH = 450> mecum tecum
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PPS </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: pronoun, personal, nominative, 3rd person 
+                 singular
+<TD WIDTH = 450> il
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PPSS </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: pronoun, personal, nominative, not 3rd person 
+                 singular
+<TD WIDTH = 450> ich vous sie je
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-PPSS+HV </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: pronoun, personal, nominative, not 3rd person 
+                 singular + verb "to have", present tense, not 3rd person 
+                 singular
+<TD WIDTH = 450> j'ai
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-QL </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: qualifier
+<TD WIDTH = 450> minus
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-RB </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: adverb
+<TD WIDTH = 450> bas assai deja um wiederum cito velociter vielleicht 
+                 simpliciter non zu domi nuper sic forsan olim oui semper 
+                 tout despues hors
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-RB+CC </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: adverb + conjunction, coordinating
+<TD WIDTH = 450> forisque
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-TO+VB </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: infinitival to + verb, infinitive
+<TD WIDTH = 450> d'entretenir
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-UH </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: interjection
+<TD WIDTH = 450> sayonara bien adieu arigato bonjour adios bueno tchalo ciao o
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-VB </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: verb, present tense, not 3rd person singular, 
+                 imperative or infinitive
+<TD WIDTH = 450> nolo contendere vive fermate faciunt esse vade noli tangere 
+                 dites duces meminisse iuvabit gosaimasu voulez habla 
+                 ksu'u'peli'afo lacheln miuchi say allons strafe portant
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-VBD </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: verb, past tense
+<TD WIDTH = 450> stabat peccavi audivi
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-VBG </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: verb, present participle or gerund
+<TD WIDTH = 450> nolens volens appellant seq. obliterans servanda dicendi 
+                 delenda
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-VBN </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: verb, past participle
+<TD WIDTH = 450> vue verstrichen rasa verboten engages
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-VBZ </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: verb, present tense, 3rd person singular
+<TD WIDTH = 450> gouverne sinkt sigue diapiace
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-WDT </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: WH-determiner
+<TD WIDTH = 450> quo qua quod que quok
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-WPO </STRONG> </CENTER>
+
+<TD WIDTH = 200> foreign word: WH-pronoun, accusative
+<TD WIDTH = 450> quibusdam
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> FW-WPS </STRONG> </CENTER>
+<TD WIDTH = 200> foreign word: WH-pronoun, nominative
+<TD WIDTH = 450> qui
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HV </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to have", uninflected present tense, infinitive or 
+                 imperative
+<TD WIDTH = 450> have hast
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HV* </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to have", uninflected present tense or imperative, 
+                 negated
+<TD WIDTH = 450> haven't ain't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HV+TO </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to have", uninflected present tense + infinitival to
+<TD WIDTH = 450> hafta
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HVD </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to have", past tense
+<TD WIDTH = 450> had
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HVD* </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to have", past tense, negated
+<TD WIDTH = 450> hadn't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HVG </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to have", present participle or gerund
+<TD WIDTH = 450> having
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HVN </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to have", past participle
+<TD WIDTH = 450> had
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HVZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb "to have", present tense, 3rd person singular
+<TD WIDTH = 450> has hath
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> HVZ* </STRONG> </CENTER>
+<TD WIDTH = 200> verb "to have", present tense, 3rd person singular, negated
+<TD WIDTH = 450> hasn't ain't
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> IN </STRONG> </CENTER>
+<TD WIDTH = 200> preposition
+<TD WIDTH = 450> of in for by considering to on among at through with under 
+                 into regarding than since despite according per before toward 
+                 against as after during including between without except upon 
+                 out over ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> IN+IN </STRONG> </CENTER>
+
+<TD WIDTH = 200> preposition, hyphenated pair
+<TD WIDTH = 450> f'ovuh
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> IN+PPO </STRONG> </CENTER>
+<TD WIDTH = 200> preposition + pronoun, personal, accusative
+<TD WIDTH = 450> t'hi-im
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> JJ </STRONG> </CENTER>
+<TD WIDTH = 200> adjective
+<TD WIDTH = 450> recent over-all possible hard-fought favorable hard meager fit
+                 such widespread outmoded inadequate ambiguous grand clerical
+                 effective orderly federal foster general proportionate ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> JJ$ </STRONG> </CENTER>
+
+<TD WIDTH = 200> adjective, genitive
+<TD WIDTH = 450> Great's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> JJ+JJ </STRONG> </CENTER>
+<TD WIDTH = 200> adjective, hyphenated pair
+<TD WIDTH = 450> big-large long-far
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> JJR </STRONG> </CENTER>
+<TD WIDTH = 200> adjective, comparative
+<TD WIDTH = 450> greater older further earlier later freer franker wider better
+                 deeper firmer tougher faster higher bigger worse younger
+                 lighter nicer slower happier frothier Greater newer Elder ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> JJR+CS </STRONG> </CENTER>
+
+<TD WIDTH = 200> adjective + conjunction, coordinating
+<TD WIDTH = 450> lighter'n
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> JJS </STRONG> </CENTER>
+<TD WIDTH = 200> adjective, semantically superlative
+<TD WIDTH = 450> top chief principal northernmost master key head main
+                 tops utmost innermost foremost uppermost paramount topmost
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> JJT </STRONG> </CENTER>
+<TD WIDTH = 200> adjective, superlative
+<TD WIDTH = 450> best largest coolest calmest latest greatest earliest simplest
+                 strongest newest fiercest unhappiest worst youngest worthiest
+                 fastest hottest fittest lowest finest smallest staunchest ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> MD </STRONG> </CENTER>
+
+<TD WIDTH = 200> modal auxillary
+<TD WIDTH = 450> should may might will would must can could shall ought need 
+                 wilt
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> MD* </STRONG> </CENTER>
+<TD WIDTH = 200> modal auxillary, negated
+<TD WIDTH = 450> cannot couldn't wouldn't can't won't shouldn't shan't mustn't 
+                 musn't
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> MD+HV </STRONG> </CENTER>
+<TD WIDTH = 200> modal auxillary + verb "to have", uninflected form
+<TD WIDTH = 450> shouldda musta coulda must've woulda could've
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> MD+PPSS </STRONG> </CENTER>
+
+<TD WIDTH = 200> modal auxillary + pronoun, personal, nominative, not 3rd 
+                 person singular
+<TD WIDTH = 450> willya
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> MD+TO </STRONG> </CENTER>
+<TD WIDTH = 200> modal auxillary + infinitival to
+<TD WIDTH = 450> oughta
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, common
+<TD WIDTH = 450> failure burden court fire appointment awarding compensation 
+                 Mayor interim committee fact effect airport management 
+                 surveillance jail doctor intern extern night weekend duty 
+                 legislation Tax Office ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN$ </STRONG> </CENTER>
+
+<TD WIDTH = 200> noun, singular, common, genitive
+<TD WIDTH = 450> season's world's player's night's chapter's golf's football's
+                 baseball's club's U.'s coach's bride's bridegroom's board's
+                 county's firm's company's superintendent's mob's Navy's ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, common + verb "to be", present tense, 
+                 3rd person singular
+<TD WIDTH = 450> water's camera's sky's kid's Pa's heat's throat's father's
+                 money's undersecretary's granite's level's wife's fat's
+                 Knife's fire's name's hell's leg's sun's roulette's cane's
+                 guy's kind's baseball's ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN+HVD </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, common + verb "to have", past tense
+<TD WIDTH = 450> Pa'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN+HVZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> noun, singular, common + verb "to have", present tense, 3rd 
+                 person singular
+<TD WIDTH = 450> guy's Knife's boat's summer's rain's company's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN+IN </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, common + preposition
+<TD WIDTH = 450> buncha
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN+MD </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, common + modal auxillary
+<TD WIDTH = 450> cowhand'd sun'll
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NN+NN </STRONG> </CENTER>
+
+<TD WIDTH = 200> noun, singular, common, hyphenated pair
+<TD WIDTH = 450> stomach-belly
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NNS </STRONG> </CENTER>
+<TD WIDTH = 200> noun, plural, common
+<TD WIDTH = 450> irregularities presentments thanks reports voters laws 
+                 legislators years areas adjustments chambers $100 bonds 
+                 courts sales details raises sessions members congressmen 
+                 votes polls calls ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NNS$ </STRONG> </CENTER>
+<TD WIDTH = 200> noun, plural, common, genitive
+<TD WIDTH = 450> taxpayers' children's members' States' women's cutters' 
+                 motorists' steelmakers' hours' Nations' lawyers' prisoners'
+                 architects' tourists' Employers' secretaries' Rogues' ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NNS+MD </STRONG> </CENTER>
+
+<TD WIDTH = 200> noun, plural, common + modal auxillary
+<TD WIDTH = 450> duds'd oystchers'll
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NP </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, proper
+<TD WIDTH = 450> Fulton Atlanta September-October Durwood Pye Ivan Allen Jr. 
+                 Jan. Alpharetta Grady William B. Hartsfield Pearl Williams 
+                 Aug. Berry J. M. Cheshire Griffin Opelika Ala. E. Pelham 
+                 Snodgrass ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NP$ </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, proper, genitive
+<TD WIDTH = 450> Green's Landis' Smith's Carreon's Allison's Boston's Spahn's
+                 Willie's Mickey's Milwaukee's Mays' Howsam's Mantle's Shaw's
+                 Wagner's Rickey's Shea's Palmer's Arnold's Broglio's ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NP+BEZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> noun, singular, proper + verb "to be", present tense, 
+                 3rd person singular
+<TD WIDTH = 450> W.'s Ike's Mack's Jack's Kate's Katharine's Black's Arthur's
+                 Seaton's Buckhorn's Breed's Penny's Rob's Kitty's Blackwell's
+                 Myra's Wally's Lucille's Springfield's Arlene's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NP+HVZ </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, proper + verb "to have", present tense, 
+                 3rd person singular
+<TD WIDTH = 450> Bill's Guardino's Celie's Skolman's Crosson's Tim's Wally's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NP+MD </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, proper + modal auxillary
+<TD WIDTH = 450> Gyp'll John'll
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NPS </STRONG> </CENTER>
+
+<TD WIDTH = 200> noun, plural, proper
+<TD WIDTH = 450> Chases Aderholds Chapelles Armisteads Lockies Carbones French
+                 Marskmen Toppers Franciscans Romans Cadillacs Masons Blacks
+                 Catholics British Dixiecrats Mississippians Congresses ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NPS$ </STRONG> </CENTER>
+<TD WIDTH = 200> noun, plural, proper, genitive
+<TD WIDTH = 450> Republicans' Orioles' Birds' Yanks' Redbirds' Bucs' Yankees'
+                 Stevenses' Geraghtys' Burkes' Wackers' Achaeans' Dresbachs'
+                 Russians' Democrats' Gershwins' Adventists' Negroes' 
+                 Catholics' ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NR </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, adverbial
+<TD WIDTH = 450> Friday home Wednesday Tuesday Monday Sunday Thursday yesterday
+                 tomorrow tonight West East Saturday west left east downtown
+                 north northeast southeast northwest North South right ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NR$ </STRONG> </CENTER>
+
+<TD WIDTH = 200> noun, singular, adverbial, genitive
+<TD WIDTH = 450> Saturday's Monday's yesterday's tonight's tomorrow's Sunday's
+                 Wednesday's Friday's today's Tuesday's West's Today's South's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NR+MD </STRONG> </CENTER>
+<TD WIDTH = 200> noun, singular, adverbial + modal auxillary
+<TD WIDTH = 450> today'll
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> NRS </STRONG> </CENTER>
+<TD WIDTH = 200> noun, plural, adverbial
+<TD WIDTH = 450> Sundays Mondays Saturdays Wednesdays Souths Fridays
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> OD </STRONG> </CENTER>
+
+<TD WIDTH = 200> numeral, ordinal
+<TD WIDTH = 450> first 13th third nineteenth 2d 61st second sixth eighth ninth
+                 twenty-first eleventh 50th eighteenth- Thirty-ninth 72nd
+                 1/20th twentieth mid-19th thousandth 350th sixteenth 701st ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PN </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, nominal
+<TD WIDTH = 450> none something everything one anyone nothing nobody everybody
+                 everyone anybody anything someone no-one nothin
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PN$ </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, nominal, genitive
+<TD WIDTH = 450> one's someone's anybody's nobody's everybody's anyone's 
+                 everyone's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PN+BEZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, nominal + verb "to be", present tense, 3rd person 
+                 singular
+<TD WIDTH = 450> nothing's everything's somebody's nobody's someone's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PN+HVD </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, nominal + verb "to have", past tense
+<TD WIDTH = 450> nobody'd
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PN+HVZ </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, nominal + verb "to have", present tense, 
+                 3rd person singular
+<TD WIDTH = 450> nobody's somebody's one's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PN+MD </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, nominal + modal auxillary
+<TD WIDTH = 450> someone'll somebody'll anybody'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PP$ </STRONG> </CENTER>
+<TD WIDTH = 200> determiner, possessive
+<TD WIDTH = 450> our its his their my your her out thy mine thine
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PP$$ </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, possessive
+<TD WIDTH = 450> ours mine his hers theirs yours
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPL </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, singular, reflexive
+<TD WIDTH = 450> itself himself myself yourself herself oneself ownself
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPLS </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, plural, reflexive
+<TD WIDTH = 450> themselves ourselves yourselves
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPO </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, accusative
+<TD WIDTH = 450> them it him me us you 'em her thee we'uns
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPS </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, personal, nominative, 3rd person singular
+<TD WIDTH = 450> it he she thee
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPS+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, 3rd person singular + verb
+                 "to be", present tense, 3rd person singular
+<TD WIDTH = 450> it's he's she's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPS+HVD </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, 3rd person singular + verb 
+                 "to have", past tense
+<TD WIDTH = 450> she'd he'd it'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPS+HVZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, personal, nominative, 3rd person singular + verb 
+                 "to have", present tense, 3rd person singular
+<TD WIDTH = 450> it's he's she's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPS+MD </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, 3rd person singular + modal 
+                 auxillary
+<TD WIDTH = 450> he'll she'll it'll he'd it'd she'd
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular
+<TD WIDTH = 450> they we I you ye thou you'uns
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+BEM </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 verb "to be", present tense, 1st person singular
+<TD WIDTH = 450> I'm Ahm
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+BER </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 verb "to be", present tense, 2nd person singular or all 
+                 persons plural
+<TD WIDTH = 450> we're you're they're
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 verb "to be", present tense, 3rd person singular
+<TD WIDTH = 450> you's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+BEZ* </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 verb "to be", present tense, 3rd person singular, negated
+<TD WIDTH = 450> 'tain't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+HV </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 verb "to have", uninflected present tense
+<TD WIDTH = 450> I've we've they've you've
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+HVD </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 verb "to have", past tense
+<TD WIDTH = 450> I'd you'd we'd they'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+MD </STRONG> </CENTER>
+
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 modal auxillary
+<TD WIDTH = 450> you'll we'll I'll we'd I'd they'll they'd you'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> PPSS+VB </STRONG> </CENTER>
+<TD WIDTH = 200> pronoun, personal, nominative, not 3rd person singular + 
+                 verb "to verb", uninflected present tense
+<TD WIDTH = 450> y'know
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> QL </STRONG> </CENTER>
+<TD WIDTH = 200> qualifier, pre
+<TD WIDTH = 450> well less very most so real as highly fundamentally even how
+                 much remarkably somewhat more completely too thus ill deeply
+                 little overly halfway almost impossibly far severly such ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> QLP </STRONG> </CENTER>
+
+<TD WIDTH = 200> qualifier, post
+<TD WIDTH = 450> indeed enough still 'nuff
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RB </STRONG> </CENTER>
+<TD WIDTH = 200> adverb
+<TD WIDTH = 450> only often generally also nevertheless upon together back 
+                 newly no likely meanwhile near then heavily there apparently 
+                 yet outright fully aside consistently specifically formally 
+                 ever just ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RB$ </STRONG> </CENTER>
+<TD WIDTH = 200> adverb, genitive
+<TD WIDTH = 450> else's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RB+BEZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> adverb + verb "to be", present tense, 3rd person singular
+<TD WIDTH = 450> here's there's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RB+CS </STRONG> </CENTER>
+<TD WIDTH = 200> adverb + conjunction, coordinating
+<TD WIDTH = 450> well's soon's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RBR </STRONG> </CENTER>
+<TD WIDTH = 200> adverb, comparative
+<TD WIDTH = 450> further earlier better later higher tougher more harder longer
+                 sooner less faster easier louder farther oftener nearer cheaper
+                 slower tighter lower worse heavier quicker ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RBR+CS </STRONG> </CENTER>
+
+<TD WIDTH = 200> adverb, comparative + conjunction, coordinating
+<TD WIDTH = 450> more'n
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RBT </STRONG> </CENTER>
+<TD WIDTH = 200> adverb, superlative
+<TD WIDTH = 450> most best highest uppermost nearest brightest hardest fastest
+                 deepest farthest loudest ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RN </STRONG> </CENTER>
+<TD WIDTH = 200> adverb, nominal
+<TD WIDTH = 450> here afar then
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RP </STRONG> </CENTER>
+
+<TD WIDTH = 200> adverb, particle
+<TD WIDTH = 450> up out off down over on in about through across after
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> RP+IN </STRONG> </CENTER>
+<TD WIDTH = 200> adverb, particle + preposition
+<TD WIDTH = 450> out'n outta
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> TO </STRONG> </CENTER>
+<TD WIDTH = 200> infinitival to
+<TD WIDTH = 450> to t'
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> TO+VB </STRONG> </CENTER>
+
+<TD WIDTH = 200> infinitival to + verb, infinitive
+<TD WIDTH = 450> t'jawn t'lah
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> UH </STRONG> </CENTER>
+<TD WIDTH = 200> interjection
+<TD WIDTH = 450> Hurrah bang whee hmpf ah goodbye oops oh-the-pain-of-it ha 
+                 crunch say oh why see well hello lo alas tarantara 
+                 rum-tum-tum gosh hell keerist Jesus Keeeerist boy c'mon 'mon 
+                 goddamn bah hoo-pig damn ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB </STRONG> </CENTER>
+<TD WIDTH = 200> verb, base: uninflected present, imperative or infinitive
+<TD WIDTH = 450> investigate find act follow inure achieve reduce take remedy
+                 re-set distribute realize disable feel receive continue place
+                 protect eliminate elaborate work permit run enter force ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB+AT </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb, base: uninflected present or infinitive + article
+<TD WIDTH = 450> wanna
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB+IN </STRONG> </CENTER>
+<TD WIDTH = 200> verb, base: uninflected present, imperative or infinitive + 
+                 preposition
+<TD WIDTH = 450> lookit
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB+JJ </STRONG> </CENTER>
+<TD WIDTH = 200> verb, base: uninflected present, imperative or infinitive + 
+                 adjective
+<TD WIDTH = 450> die-dead
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB+PPO </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb, uninflected present tense + pronoun, personal, accusative
+<TD WIDTH = 450> let's lemme gimme
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB+RP </STRONG> </CENTER>
+<TD WIDTH = 200> verb, imperative + adverbial particle
+<TD WIDTH = 450> g'ahn c'mon
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB+TO </STRONG> </CENTER>
+<TD WIDTH = 200> verb, base: uninflected present, imperative or infinitive + 
+                 infinitival to
+<TD WIDTH = 450> wanta wanna
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VB+VB </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb, base: uninflected present, imperative or infinitive; 
+                 hypenated pair
+<TD WIDTH = 450> say-speak
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VBD </STRONG> </CENTER>
+<TD WIDTH = 200> verb, past tense
+<TD WIDTH = 450> said produced took recommended commented urged found added 
+                 praised charged listed became announced brought attended 
+                 wanted voted defeated received got stood shot scheduled 
+                 feared promised made ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VBG </STRONG> </CENTER>
+<TD WIDTH = 200> verb, present participle or gerund
+<TD WIDTH = 450> modernizing improving purchasing Purchasing lacking enabling
+                 pricing keeping getting picking entering voting warning making
+                 strengthening setting neighboring attending participating 
+                 moving ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VBG+TO </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb, present participle + infinitival to
+<TD WIDTH = 450> gonna
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VBN </STRONG> </CENTER>
+<TD WIDTH = 200> verb, past participle
+<TD WIDTH = 450> conducted charged won received studied revised operated 
+                 accepted combined experienced recommended effected granted 
+                 seen protected adopted retarded notarized selected composed 
+                 gotten printed ...
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VBN+TO </STRONG> </CENTER>
+<TD WIDTH = 200> verb, past participle + infinitival to
+<TD WIDTH = 450> gotta
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> VBZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> verb, present tense, 3rd person singular
+<TD WIDTH = 450> deserves believes receives takes goes expires says opposes 
+                 starts permits expects thinks faces votes teaches holds calls 
+                 fears spends collects backs eliminates sets flies gives seeks 
+                 reads ...
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WDT </STRONG> </CENTER>
+<TD WIDTH = 200> WH-determiner
+<TD WIDTH = 450> which what whatever whichever whichever-the-hell
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WDT+BER </STRONG> </CENTER>
+<TD WIDTH = 200> WH-determiner + verb "to be", present tense, 2nd person 
+                 singular or all persons plural
+<TD WIDTH = 450> what're
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WDT+BER+PP </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-determiner + verb "to be", present, 2nd person singular or 
+                 all persons plural + pronoun, personal, nominative, not 3rd 
+                 person singular
+<TD WIDTH = 450> whaddya
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WDT+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> WH-determiner + verb "to be", present tense, 3rd person 
+                 singular
+<TD WIDTH = 450> what's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WDT+DO+PPS </STRONG> </CENTER>
+<TD WIDTH = 200> WH-determiner + verb "to do", uninflected present tense + 
+                 pronoun, personal, nominative, not 3rd person singular
+<TD WIDTH = 450> whaddya
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WDT+DOD </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-determiner + verb "to do", past tense
+<TD WIDTH = 450> what'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WDT+HVZ </STRONG> </CENTER>
+<TD WIDTH = 200> WH-determiner + verb "to have", present tense, 3rd person 
+                 singular
+<TD WIDTH = 450> what's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WP$ </STRONG> </CENTER>
+<TD WIDTH = 200> WH-pronoun, genitive
+<TD WIDTH = 450> whose whosever
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WPO </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-pronoun, accusative
+<TD WIDTH = 450> whom that who
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WPS </STRONG> </CENTER>
+<TD WIDTH = 200> WH-pronoun, nominative
+<TD WIDTH = 450> that who whoever whosoever what whatsoever
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WPS+BEZ </STRONG> </CENTER>
+<TD WIDTH = 200> WH-pronoun, nominative + verb "to be", present, 3rd person 
+                singular
+<TD WIDTH = 450> that's who's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WPS+HVD </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-pronoun, nominative + verb "to have", past tense
+<TD WIDTH = 450> who'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WPS+HVZ </STRONG> </CENTER>
+<TD WIDTH = 200> WH-pronoun, nominative + verb "to have", present tense, 
+                 3rd person singular
+<TD WIDTH = 450> who's that's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WPS+MD </STRONG> </CENTER>
+<TD WIDTH = 200> WH-pronoun, nominative + modal auxillary
+<TD WIDTH = 450> who'll that'd who'd that'll
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WQL </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-qualifier
+<TD WIDTH = 450> however how
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB </STRONG> </CENTER>
+<TD WIDTH = 200> WH-adverb
+<TD WIDTH = 450> however when where why whereby wherever how whenever
+                 whereon wherein wherewith wheare wherefore whereof howsabout
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+BER </STRONG> </CENTER>
+<TD WIDTH = 200> WH-adverb + verb "to be", present, 2nd person singular or 
+                 all persons plural
+<TD WIDTH = 450> where're
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+BEZ </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-adverb + verb "to be", present, 3rd person singular
+<TD WIDTH = 450> how's where's
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+DO </STRONG> </CENTER>
+<TD WIDTH = 200> WH-adverb + verb "to do", present, not 3rd person singular
+<TD WIDTH = 450> howda
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+DOD </STRONG> </CENTER>
+<TD WIDTH = 200> WH-adverb + verb "to do", past tense
+<TD WIDTH = 450> where'd how'd
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+DOD* </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-adverb + verb "to do", past tense, negated
+<TD WIDTH = 450> whyn't
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+DOZ </STRONG> </CENTER>
+<TD WIDTH = 200> WH-adverb + verb "to do", present tense, 3rd person singular
+<TD WIDTH = 450> how's
+
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+IN </STRONG> </CENTER>
+<TD WIDTH = 200> WH-adverb + preposition
+<TD WIDTH = 450> why'n
+</TR> </TD> <TR ALIGN=top> <TD> <CENTER> <STRONG> WRB+MD </STRONG> </CENTER>
+
+<TD WIDTH = 200> WH-adverb + modal auxillary
+<TD WIDTH = 450> where'd
+</TR> </TD>
+</TABLE>
+
+
+<br>
+<hr>
+<center>
+<a href="../amalgam/amalghome.htm">
+<img src="home2.gif" alt="AMALGAM Home Page" border=2 height=40 width=40></a>
+<a href="tagmenu.html">
+<img src="return.gif" alt="Previous Page" border=2 height=40 width=40></a>
+<a href="tagmenu.html"><img src="up2.gif" alt="Up A Level" border=2 height=40 width=40></a>
+
+<a href="ice.html"><img src="more.gif" alt="Next Page" border=2 height=40 width=40></a>
+
+<br>
+<a href="../amalgam/amalghome.htm">AMALGAM HOMEPAGE</a> | <a href="tagmenu.html">PREVIOUS
+PAGE</a> | <a href="tagmenu.html">UP A LEVEL</a> | <a href="ice.html">NEXT
+PAGE </a>
+<br></p></center>
+</body>
+</html>
