@@ -2,7 +2,8 @@
 % Unit tests for the SDCG compiler 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:-cl('../compiler/sdcg.pl'). % Why doesn't load operator definition from this??
+:-cl('../config.pl').
+:-require('compiler/sdcg.pl').
 :- op(1200, xfx, ==>).
 :- op(1200, xfx, @=>).
 
@@ -27,6 +28,10 @@ run_test_rules([Rule|Rest]) :-
 				nl
 				; true)	; true) ; true),
 	run_test_rules(Rest).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test of various utility rules
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 test_compact_list :-
 	compact_list([[a],[b],[c],d,[e],[f]],[[a,b,c],d,[e,f]]).
@@ -53,22 +58,6 @@ test_hyphenate :-
 test_replacement_name :-
 	replacement_name(funny_name, 3, 42, funny_name_3_42).
 
-% update_msw should work like queue, last inserted item in front
-test_update_msw :-
-	retractall(values(_,_)), % setup
-	update_msw(test, first_element),
-	values(test,[first_element]),
-	update_msw(test, [next,next_next]),
-	values(test,[[next,next_next],first_element]),
-	retractall(values(_,_)). % teardown
-	
-test_expand_msw :-
-	retractall(values(_,_)),
-	expand_msw(test,1,test_1_1),
-	expand_msw(test,1,test_1_2),
-	expand_msw(test,3,test_3_1),
-	retractall(values(_,_)).
-	
 test_combine_two :-
 	combine_two([[a,a],[b,b],[c,c]],[[x,x],[y,y],[z,z]],
 	[[a,a,x,x],[b,b,x,x],[c,c,x,x],[a,a,y,y],[b,b,y,y],[c,c,y,y],[a,a,z,z],[b,b,z,z],[c,c,z,z]]).
@@ -87,6 +76,39 @@ test_remove_ground :-
 	remove_ground([y,X], [X]),
 	remove_ground([X,y,Z],[X,Z]).
 	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MSW and rule assertions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+test_expand_asserted_set :-
+	expand_asserted_set(myset,a1),
+	expand_asserted_set(myset,a2),
+	expand_asserted_set(myset,a2),
+	expand_asserted_set(myset,a3),
+	myset(Set),
+	set_equal(Set,[a1,a2,a3]),
+	retract(myset(Set)).
+	
+% update_msw should work like queue, last inserted item in front
+test_update_msw :-
+	retractall(values(_,_)), % setup
+	update_msw(test, first_element),
+	values(test,[first_element]),
+	update_msw(test, [next,next_next]),
+	values(test,[[next,next_next],first_element]),
+	retractall(values(_,_)). % teardown
+
+test_expand_msw :-
+	retractall(values(_,_)),
+	expand_msw(test,1,test_1_1),
+	expand_msw(test,1,test_1_2),
+	expand_msw(test,3,test_3_1),
+	retractall(values(_,_)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test of regular expression expansion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 test_regex_rule_head :-
 	regex_rule_head(star,test(a,b,c),sdcg_regex_star_test(a,b,c)).
 	
@@ -113,39 +135,50 @@ test_expand_constituent :-
 		(sdcg_regex_star_a(b,V1)@=>a(b,V1)),
 		(sdcg_regex_star_a(b,V1)@=>sdcg_regex_star_a(b,V1),sdcg_regex_star_a(b,V1))
 	].
-	
-test_resolve_expand_mode :-
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test macro expansion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+test_arg_expand_list :-
+	% setup 
+	assert(word(he,sg,masc)),
+	assert(expand_mode(word(-,+,+))),
+	% test:
+	Args = [ a,b,c ],
+	Expander =.. [ word | Args ],
+	resolve_expand_mode(Expander, ModeList),
+	arg_expand_list(Args, ModeList,NewArgList),
+	NewArgList == [b,c],
+	% cleanup
+	retract(word(he,sg,masc)),
+	retract(expand_mode(word(-,+,+))).
+
+test_resolve_expand_mode1 :-
+	not resolve_expand_mode(blah(x,_,z),_),
+	not resolve_expand_mode(blah(_),_),
+	assert(expand_mode(blah(+,+,-))),
+	resolve_expand_mode(blah(_X,_Y,_Z), [+,+,-]),
+	resolve_expand_mode(blah(x,y,z), [+,+,-]),
+	retract(expand_mode(blah(+,+,-))).
+
+test_resolve_expand_mode2 :-
 	% setup 
 	assert(number(he,sg)),
 	assert(expand_mode(number(-,+))),
 	% test:
 	Expander =.. [ number, X, Y ],
 	resolve_expand_mode(Expander, ModeList),
-	%       write(ModeList),nl,
 	ModeList == [-,+], % correctness assertion
 	% cleanup
 	retract(number(he,sg)),
 	retract(expand_mode(number(-,+))).
 
-test_arg_expand_list :-
-        % setup 
-        assert(word(he,sg,masc)),
-        assert(expand_mode(word(-,+,+))),
-        % test:
-        Args = [ a,b,c ],
-        Expander =.. [ word | Args ],
-        resolve_expand_mode(Expander, ModeList),
-        arg_expand_list(Args, ModeList,NewArgList),
-		NewArgList == [b,c],
-        % cleanup
-        retract(word(he,sg,masc)),
-        retract(expand_mode(word(-,+,+))).
-
-test_expand_asserted_set :-
-	expand_asserted_set(myset,a1),
-	expand_asserted_set(myset,a2),
-	expand_asserted_set(myset,a2),
-	expand_asserted_set(myset,a3),
-	myset(Set),
-	set_equal(Set,[a1,a2,a3]),
-	retract(myset(Set)).
+test_expand_feature :-
+	% We expect ground variables to be removed since there is no expand_mode pattern
+	expand_feature(@blah(a,A,B,c,d),Expander1,[A,B]), 
+	Expander1==blah(a,A,B,c,d),	
+	assert(expand_mode(blah(-,+,-,-,+))),
+	expand_feature(@blah(a,X,Y,c,d),Expander2,[X,d]),
+	Expander2==blah(a,X,Y,c,d),
+	retract(expand_mode(blah(-,+,-,-,+))).

@@ -18,3 +18,103 @@ FOC compilation:
 	- General purpose, wide-coverage english grammar
 - Some way (syntax) of setting the probability when defining rules
 
+
+===
+
+Problem with conditioning:
+
+The generated PRISM program uses \emph{one} MSW to decide what rule to expand. But in choosing to expand
+a rule it also implicitly chooses the features of that rule. This makes it difficult to verify that the
+probability distribution of the program is correct with regard to grammar. 
+
+For instance in the selection of a rule a feature may implicitly be given a value or not, e.g. some rules
+may instantiate the feature right away and some may postpone the instantiation of the feature to a later
+point.
+
+* Examples of calculating the probability distribution of a grammar.
+
+Now, the grammar doesn't really allow any form of conditioning. This is a problem and we need a syntax 
+for allowing conditioning as well as the inner mechanics of MSW generation.
+
+Play with syntax:
+Guards as conditioners?
+
+% Hmm. This actually isn't so bad.
+(a==b, blah(X)) | head ==> body.
+
+(@word(X)) | head ==> body.
+
+% This looks a bit more like statistics notation, which is nice.
+head(X) ==> vp(X), np(_) | (X==foo, Y==bar).
+
+How would this work?
+
+There need would be and MSW:
+msw(head(1,conditions()).
+However, X would need to be instantiated!
+
+What if we have a rule that is conditioned on something and one that isnt, but with the same head?
+
+For each distint conditioning we have a separate MSW. How can this be implemented?
+- We can index each variable in the head such that, a conditioning is a set of conditions:
+
+condition(var1,foo), condition(var2,bar) ... etc.
+
+so.. 
+
+MSW(head(1,[[var1,foo],[var2,bar]]), [...]).
+
+Maybe we could add the conditions as a head feature, eg.
+
+head(X) ==> body | (X==bar)  *=> head([[==,X,bar]],X)==>body.
+
+Then we can even express:
+
+head(X,Y) ==> body | (X==Y) *=> head([[==,X,Y]]).
+
+Problem is what if we have the same rule (with the )
+
+We need to modify selector rules:
+
+
+=======
+
+Ideas for the grammar corrector:
+
+Automatically learning grammar corrections.
+
+- Extend the grammar to include "ungrammatical rules"
+- A set of correct sentences. (will be matched by )
+	- Corrections are the sentences them selves.
+- A set of flawed sentence.
+	- And corresponding corrected sentences.
+
+Idea: We can find the most likely corrections using Viterbi.
+
+It seems that most modern approaches use a combination of grammars with feature structures and constraint solvers
+for grammar correction. Is there an approach that uses statistical methods?
+
+s(np(det(a),noun(boys))) ==> transform ==>
+	a boy
+	some boys
+Hmmm.. 
+
+Change the features requirements of a word such that it matches a particular best parse.
+
+Generate all feature combinations.
+
+Divide and Conquer approach
+- Generate parse tree for faulty sentence and correction.´
+	- Learn mapping from faulty parse tree to correct parse tree second.
+
+We can learn easily learn context-free grammar rules from parse trees. But it's more difficult with parse trees with features?? How do we represent this?
+
+Here is one way:
+(NP[number=plural]
+	(DET [number=plural] (TERM('the'))),
+	(NOUN [number=plural] (TERM('the')))
+).
+
+
+Algorithm for converting parse trees to rules:
+

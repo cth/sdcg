@@ -1,6 +1,3 @@
-compiler/*.out
-grammars/*.out
-misc/*.out
+*.out
+generated_sdcg.psm
 misc/temp*
-test/*.out
-util/*.out

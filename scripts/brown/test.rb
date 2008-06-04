@@ -18,5 +18,10 @@ def test_brown_to_prolog
   puts BrownCorpus.new("/usr/share/nltk/data/corpora/brown").to_prolog
 end
 
+def test_create_descriptions
+  BrownCorpus.new(nil).parse_tag_descriptions
+end
+
 #test_brown_to_prolog
-test_convert_list
+#test_convert_list
+test_create_descriptions

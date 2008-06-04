@@ -2,7 +2,11 @@ require 'brown_corpus.rb'
 include Corpus
 
 BROWN_CORPUS_DIR="/usr/share/nltk/data/corpora/brown"
-OUTPUT_FILE="../../grammars/english/brown_corpus.pl"
+OUTPUT_DIR="../../corpora/brown"
+PIECE_DIR="#{OUTPUT_DIR}/parts"
+PIECE_LOADER="#{OUTPUT_DIR}/brown_parts.pl"
+OUTPUT_FILE="#{OUTPUT_DIR}/brown_corpus_whole.pl"
+LINES_PER_PIECE=1000
 
 HEADER = <<EOD
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -17,7 +21,47 @@ HEADER = <<EOD
 
 EOD
 
-File.open(OUTPUT_FILE,"w") do |file|
-  file << HEADER
-  file << BrownCorpus.new(BROWN_CORPUS_DIR).to_prolog
+puts "Processing raw corpus files"
+brown = BrownCorpus.new(BROWN_CORPUS_DIR)
+
+puts "Writing prolog file #{OUTPUT_FILE}. This may take a while."
+#File.open(OUTPUT_FILE,"w") do |file|
+#  file << HEADER
+#  file << brown.to_prolog
+#end
+
+# Make a version which is split in to pieces of 1000 lines per file.
+puts "Creating version in small #{LINES_PER_PIECE} line pieces"
+Dir.mkdir(PIECE_DIR) unless File.directory?(PIECE_DIR)
+
+reversed = brown.to_prolog.split("\n").reverse
+done = false
+fileno = 1
+files = []
+while not done
+  lines_to_write = []
+  puts "Piece no #{fileno}"
+  1.upto LINES_PER_PIECE do
+    line = reversed.pop
+    if line == nil # We are at the end
+      done = true
+      break
+    else
+      lines_to_write << reversed.pop
+    end
+  end
+    
+  # Write the file
+  files << filename="#{PIECE_DIR}/brown_part#{fileno}.pl" 
+  puts "writing #{filename}"
+  File.open(filename,"w") do |file|
+    file << lines_to_write.join("\n")
+  end
+  fileno += 1
+end
+
+# Write a loader for all the pieces
+File.open(PIECE_LOADER, "w") do |file|
+  file << ":- cl('../../config.pl').\n"
+  file << (files.map { |l| ":- require('corpora/brown/parts/#{File.basename(l)}')." }).join("\n")
 end

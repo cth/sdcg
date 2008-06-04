@@ -25,4 +25,3 @@ If s(Num) doesn't need to unify with anything else it would be 50/50.
 
 The amazing thing about this is that PRISMN would not have to be used since there are no failures
 in the generative model!
-

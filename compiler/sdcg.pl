@@ -13,7 +13,7 @@
 :- dynamic sdcg_user_option/2.
 :- dynamic sdcg_start_definition/2.
 
-:- cl('../util/util.pl').
+:- require('util/util.pl').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SDCG Options
@@ -21,7 +21,6 @@
 
 sdcg_default_option(start_symbol, sdcg).
 sdcg_default_option(maxdepth, 10).
-sdcg_default_option(prism_file, 'generated_sdcg.psm').
 sdcg_default_option(prism_file, 'generated_sdcg.psm').
 sdcg_default_option(prism_invoker, prismn). % Use prismn (with FOC/FAM as default)
 sdcg_default_option(debug,no).
@@ -121,14 +120,13 @@ create_implementation_rule(Name, Features, RHS,ImplRule) :-
 	append(Features,[In,Out,Depth],Params),
 	LHS =.. [ sdcg_rule | [ Name | Params ]],
 	(RHS == [[]] ->
-		% If RHS contains an empty list, so we just create a rule without an RHS, and leave the difference-lists untouched
-		In = Out,
-		ImplRule = LHS
+		% In the case of an empty rule, the Out list should be the same as the in list.
+		ImplRuleRHS=..[=,Out,In]
 	;
 		% Otherwise, rewrite RHS constituents (add difference-lists, etc.)
-		rewrite_rule_rhs(In,Out,Depth,RHS,ImplRuleRHS),
-		ImplRule =.. [ :-, LHS, ImplRuleRHS ]
-	).
+		rewrite_rule_rhs(In,Out,Depth,RHS,ImplRuleRHS)
+	),
+	ImplRule =.. [ :-, LHS, ImplRuleRHS ].
 
 rewrite_rule_rhs(In, Out,_,[],Body) :-
 	Body =.. [ =, Out, In ].
@@ -184,7 +182,7 @@ expand_expanders(LHS,RHS,Rules) :-
 	ExpCall =.. [ ExpanderName, X ],
 	setof(X,ExpCall,Rules),
 	retract(ExpanderRule).
-	
+
 % Create a rule, the invocation of which results in combinations
 % of grammar rules based on the expansions in the original rule
 create_expansion_rule(LHS,RHS,ExpRule) :-
@@ -199,6 +197,7 @@ create_expansion_rule(LHS,RHS,ExpRule) :-
 	remove_empty(RHSExpandersE,RHSExpanders),
 	% Join expanders:
 	append(LHSExpanders,RHSExpanders,Expanders),
+	
 	% Create LHS rule creator:
 	functor(LHS,FuncLHS,_),
 	append([FuncLHS],LHSVars,NewLHS),
@@ -229,13 +228,13 @@ expand_feature_list([],[],[]).
 expand_feature_list([Feature|R],[Expander|ER],[FVars|VR]) :-
 	expand_feature(Feature,Expander,FVars),
 	expand_feature_list(R,ER,VR).
-
+	
 % If given an expansion feature e.g. @blah(ground,Y,Z), the variable "Expander" will
 % be set to "blah(ground,Y,Z)" and NewFeatures will be a list [Y,Z] containing the
 % unification variables.
 expand_feature(Feature, Expander, NewFeatures) :-
 	((nonvar(Feature),functor(Feature,@,1)) ->
-		Feature =.. [ @ , Expander ],
+		Feature =.. [ @, Expander ],
 		Expander =.. [ _ | Args ],
 		(resolve_expand_mode(Expander, ModeList) ->
 			arg_expand_list(Args,ModeList,NewFeatures)
@@ -264,8 +263,8 @@ resolve_expand_mode(Expander, ModeList) :-
 	Expander =.. [ Head | Args ],
 	length(Args,ArgLen),
 	unifiable_list(ArgLen,ModeList),
-	ModeExpanderArg =.. [ Head | ModeList ],
-	expand_mode(ModeExpanderArg).
+	ModeExpanderArg =.. [ Head | ModeList ], !,
+	catch(expand_mode(ModeExpanderArg), _, fail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Constituent expansion
@@ -486,11 +485,28 @@ remove_rule(N,Arity) :-
 	(clause(CL,Body) -> retract((CL :- Body));
 	throw(error(remove_rule(N/Arity))), write(CL), nl).
 	
-write_consume :-
+write_consume1 :-
 	Head =.. [ consume, A, B, C],
 	Body =.. [ =, A, [B|C] ],
 	Clause =.. [ :-, Head, Body ],
 	portray_clause(Clause).
+
+write_consume :-
+	write_append,
+	Head =.. [ consume, A, B, C],
+	Body =.. [ ap, [B], C, A ],
+	Clause =.. [ :-, Head, Body ],
+	portray_clause(Clause).
+	
+write_append :-
+	Head1 =.. [ ap, [], A, B],
+	Body1 =.. [ =, B, A ],
+	Clause1 =.. [ :-, Head1, Body1 ],
+	Head2 =.. [ ap, [H|X],Y,[H|Z] ],
+	Body2 =.. [ ap, X,Y,Z],
+	Clause2 =.. [ :-, Head2, Body2 ],
+	portray_clause(Clause1),
+	portray_clause(Clause2).
 	
 write_mysterious_all :-
 	Head =.. [ all, [A], cont(A,B) ],

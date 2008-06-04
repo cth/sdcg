@@ -9,6 +9,8 @@ dot :- write('.').
 is_list(X) :-
 	nonvar(X),
 	functor(X,'.',_).
+	
+list_item(X,[X]).
 
 % Test if X is inclosed in curly brackets
 is_code_block(X) :-
