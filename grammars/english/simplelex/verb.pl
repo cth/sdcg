@@ -13,7 +13,7 @@
 % (which is marked by adding "-s"); the rest of the persons are not distinguished in the verb.
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Common verbs, present tenses
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % These verbs can be used with either singular
@@ -54,13 +54,13 @@ verb(@number(N),present,@exclude(person,second,P),@present_tense_verb_base(V)) =
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Common verbs, present tense 3rd person
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-present_tense_third_person_verb(derserve,deserves).
-present_tense_third_person_verb(believe,believes).
-present_tense_third_person_verb(receive,receives).
-present_tense_third_person_verb(take,takes).
-present_tense_third_person_verb(go,goes).
-present_tense_third_person_verb(expire,expires).
-present_tense_third_person_verb(say,says).
+present_tense_third_person_verb(deserves).
+present_tense_third_person_verb(believes).
+present_tense_third_person_verb(receives).
+present_tense_third_person_verb(takes).
+present_tense_third_person_verb(goes).
+present_tense_third_person_verb(expires).
+present_tense_third_person_verb(says).
 present_tense_third_person_verb(opposes).
 present_tense_third_person_verb(starts).
 present_tense_third_person_verb(permits).
@@ -82,7 +82,10 @@ present_tense_third_person_verb(gives).
 present_tense_third_person_verb(seeks).
 present_tense_third_person_verb(reads).
 
-verb(sing,present,third,@present_tense_thirdverb(V)) ==> [V].
+verb_third_str(V) :-
+	stringify(present_tense_third_person,V).
+
+verb(sing,present,third,@present_3rd_verb(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Some past tense verbs
@@ -113,8 +116,11 @@ past_tense_verb(scheduled).
 past_tense_verb(feared).
 past_tense_verb(promised).
 
+past_verb(X) :-
+	stringify(past_tense_verb,X).
+
 % A rule for representing past tense verbs
-verb(@number(N),past,@person(P),@past_tense_verb(V)) ==> [V].
+verb(@number(N),past,@person(P),@past_verb(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Past participle
@@ -143,8 +149,11 @@ past_participle_verb(composed).
 past_participle_verb(gotten).
 past_participle_verb(printed).
 
+past_part_verb_str(X) :-
+	stringify(past_participle_verb,X).
+
 % A rule for representing past tense verbs.
-verb(@number(N),past-participle,@person(P),@past_participle_verb(V)) ==> [V].
+verb(@number(N),past-participle,@person(P),@past_part_verb_str(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Gerund verbs
@@ -177,19 +186,29 @@ gerund_verb(attending).
 gerund_verb(participating).
 gerund_verb(moving).
 
-% A rule for gerund verbs
-gerund_verb(@gerund_verb(V)) ==> [V].
+gerund_str(X) :-
+	stringify(gerund_verb,X)
 
+% A rule for gerund verbs
+gerund_verb(@gerund_str(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Auxillaries
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % special auxilary verbs
-aux(Number,Tense,)
-aux ==> [ do ].
-aux ==> [ does ].
-aux ==> [ have ].
-aux ==> [ has ].
+
+verb(@number(N),present,third,'to do') ==> [ 'does' ].
+verb(@number(N),present,@exclude(third,Person),'to do') ==> [ 'do' ].
+verb(@number(N),past,@person(P),'to do') ==> [ 'did' ].
+
+verb(@number(N),present,third,'to have') ==> [ 'has' ].
+verb(@number(N),present,@exclude(third,Person),'to have') ==> [ 'have' ].
+verb(@number(N),past,@person(P),'to have') ==> [ 'had' ].
+
+verb(@number(N),present,third,'to be') ==> [ 'is' ].
+verb(@number(N),present,@exclude(third,Person),'to be') ==> [ 'have' ].
+verb(sing,past,@person(P),'to be') ==> [ 'was' ].
+verb(plural,past,@person(P),'to be') ==> [ 'were' ].
 
 % From Brown. There is seems to be no tense distinction :-(
 % e.g. "will" and "would" are both under the same tag (MD)
@@ -205,8 +224,8 @@ modal(could).
 modal(shall).
 modal(ought).
 
-aux_str(StrList) :-
+modal_str(StrList) :-
 	aux(Atom),
 	atom_chars(Atom,StrList).
 
-aux(@aux_str(X)) ==> [X].
+modal(@modal_str(X)) ==> [X].

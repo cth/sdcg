@@ -7,8 +7,6 @@
 % Need something for determining if a noun is a mass noun
 % noun(countable,Type,Number)
 
-plur(company,companies).
-
 noun(countable,sing,neut,'company') ==> ['company'].
 noun(countable,plur,neut,'company') ==> ['companies'].
 noun(countable,sing,neut,'department') ==> ['department'].

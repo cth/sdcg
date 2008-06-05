@@ -34,56 +34,79 @@ s((aux(Stem),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==
 
 % s --> aux_verb, np, vp.
 % Do/have behave quite differently in question like sentences.
-% have: VP in past tense --	Have any people come?, have you done it?
 % do: VP in present tense -- Do they stop?
 % did: VP in present tense -- Did they think about it?
-% had: VP in past tense -- Had they thought about it?
-% Do any of these flights have stops? - I think we need to split this out: Eg. do/does
 s((verb(VNumber,VTense,VPerson,'to do'),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
 	verb(VNumber,VTense,VPerson,'to do')),
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,present,Person).
 
+% have: VP in past tense --	Have any people come?, have you done it?
+% had: VP in past tense -- Had they thought about it?
 s((verb(VNumber,VTense,VPerson,'to have'),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
-	verb(VNumber,VTense,VPerson,'to have')),
+	verb(VNumber,VTense,Person,'to have')),
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,past,Person).
-	
-	
-	
+
 % s --> wh, np, vp.
 % wh-subject-question
 % Which flights serve breakfeast?
-s((wh_determiner(Stem),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==> 
+s((wh_determiner(Stem),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
 	wh_determiner(WHStem),
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,Tense,Person).
 
+% s --> wh,np,verb('to do'/'to have'),np,vp
 % wh-non-subject-question
-% What flights do you have from A to B.
-% What traits did he have
-% Which editor have you used
+% What flights do you have from A to B?
+% What traits did he show?
 % *How do you do?
-s ==> 
+s((wh(WHStem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPerson,Stem),np(NPTree2,NPNumber2,NPPerson2,NPGender2),vp(VPTree,VPNumber,present,VPPerson))) ==>
 	wh(WHStem), 
 	np(NPTree1,NPNumber1,NPPerson1,NPGender1),
-	verb(VNumber,VTense,VPerson,@enum(['to have','to do'],Stem)),
-	% aux(Num2), % _^ 
+	verb(VNumber,VTense,VPerson,'to do'),
 	np(NPTree2,NPNumber2,NPPerson2,NPGender2),
-	vp(VPTree,VPNumber,present,VPPerson), 
+	vp(VPTree,VPNumber,present,VPPerson), % is always in present tense
 	% We do explicit agreement for this one, as it is a bit complicated.
 	{
-		NPNumber1 == VNumber,
-		NPPerson1 == VPerson,
+		% If NP is pronoun like 'he' (sing,2nd person) then the verb 'to be' must be 'does' (sing,2nd person).
+		VNumber == NPNumber1,
+		VPerson == NPPerson1
+	}.
+	
+% Which editor have you used
+s((wh(WHStem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPerson,Stem),np(NPTree2,NPNumber2,NPPerson2,NPGender2),vp(VPTree,VPNumber,present,VPPerson))) ==>
+	wh(WHStem), 
+	np(NPTree1,NPNumber1,NPPerson1,NPGender1),
+	verb(VNumber,VTense,VPerson,'to have'),
+	% aux(Num2), % _^ 
+	np(NPTree2,NPNumber2,NPPerson2,NPGender2),
+	vp(VPTree,VPNumber,past,VPPerson), % is always past tense
+	% We do explicit agreement for this one, as it is a bit complicated.
+	{
+		% If NP is pronoun like 'he' (sing,2nd person) then the verb 'to have' must be 'has' (sing,2nd person).
+		VNumber == NPNumber1,
+		VPerson == NPPerson1
 	}.
 
 % A very simple account of fronting:
-s ==> pp, np(Num1).  				% On the table.
-s ==> pp, comma, s.					% On tuesday, it will happen.
+% On the table.
+s((pp(PPTree,PPCountable,PPNumber,PPGender)) ==>
+	pp(PPTree,PPCountable,PPNumber,PPGender).
+
+% On tuesday, it will happen.
+s((pp(PPTree,PPCountable,PPNumber,PPGender),comma,s(STree)) ==>
+	pp(PPTree,PPCountable,PPNumber,PPGender),
+	comma,
+	s(STree).
 
 % Conjuction of sentences:
-s ==> s, conjunction, s.
-s ==> start_enclose, s, end_enclose.
+s((s(STree1),conjunction(Stem),s(STree2)) ==> 
+	s(STree1),
+	conjunction(Stem),
+	s(STree2).
+
+%s ==> start_enclose, s, end_enclose.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % vp: Verb phrases
@@ -250,12 +273,19 @@ np(det(Number,Gender,Stem),ap(APTree),nominal(NomTree,Countable,Number,Gender)) 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % qp: Combinations of quantifiers, cardinals and nomimals
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-qp(ordinal(Number,Stem),Number) ==> ordinal(Number,Stem).
-qp(cardinal(Number,Stem),Number) ==> cardinal(Number,Stem).
-qp(quantifier(Number,Stem),Number) ==> quantifier(Number,Stem).
+qp(ordinal(Number,Stem),Number) ==> 
+	ordinal(Number,Stem).
+	
+qp(cardinal(Number,Stem),Number) ==>
+	cardinal(Number,Stem).
+	
+qp(quantifier(Number,Stem),Number) ==>
+	quantifier(Number,Stem).
 
 % Combinations. We allow them all, but they most agree in number.
-qp(Number) ==> qp(Number), qp(Number).
+qp(Number) ==> 
+	qp(Number),
+	qp(Number).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ap: Adjective phrases

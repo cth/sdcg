@@ -1,6 +1,8 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Relative pronouns
 % Case: nominative/accusative/genitive
 % Gender: masc/fem/neut
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Accusative: (brown tag WPO)
 relative_pronoun(accusative,@human(G),'whom') ==> [ 'whom' ].
