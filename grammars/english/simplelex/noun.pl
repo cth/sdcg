@@ -67,11 +67,10 @@ noun(countable,sing,neut,'breeze') ==> ['breeze'].
 noun(countable,plur,neut,'breeze') ==> ['breeze'].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Possive nouns
+% Possesive nouns
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 poss_noun(sing,company,'company\'s').
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Pronouns
@@ -134,9 +133,13 @@ pronoun(sing,third,@subj_obj(C),neut) ==> [ 'New York' ].
 % Relative pronouns
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % WH-pronoun, accusative 
+% It may occur in sentences like: "The dog _that_ bites".
+
 
 relative_pronoun(@number(Number),third,neut) ==> ['that'].
 relative_pronoun(@number(Number),third,@human(G)) ==> ['who'].
+
+
 
 % We are going to have a separate wh-category
 %pronoun(interogative,third,@subj_obj,@gender(G)) ==> [ 'who' ].

@@ -20,3 +20,5 @@ det(plur,@gender(G),those) ==> [those].
 
 det(@number(N),@gender(G),some) ==> [some].
 det(@number(N),@gender(G),every) ==> [every].
+
+wh_determiner(@enum([which,what,whatever,whichever,whichever-the-hell],Stem)) ==> [Stem].

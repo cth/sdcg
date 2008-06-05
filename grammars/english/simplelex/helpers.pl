@@ -40,3 +40,7 @@ exclude(Pred,List,Value) :-
 	call(C),
 	not member(Value,List).
 
+stringify(Pred,StringValue) :-
+	ToCall =.. [Pred,AtomValue],
+	call(ToCall),
+	atom_chars(AtomValue,StringValue).

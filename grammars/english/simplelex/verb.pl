@@ -1,6 +1,6 @@
 % Tense:
 % Number: sing/plur
-% past, present, future
+% Tense: past, present, future
 % Person: first, second, third
 % Valency: intransitive, transitive, ditransitive
 
@@ -180,21 +180,33 @@ gerund_verb(moving).
 % A rule for gerund verbs
 gerund_verb(@gerund_verb(V)) ==> [V].
 
-% auxilary verbs
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Auxillaries
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% special auxilary verbs
+aux(Number,Tense,)
 aux ==> [ do ].
 aux ==> [ does ].
-aux ==> [ can ].
-aux ==> [ will ].
+aux ==> [ have ].
+aux ==> [ has ].
 
 % From Brown. There is seems to be no tense distinction :-(
 % e.g. "will" and "would" are both under the same tag (MD)
-aux(should).
-aux(may).
-aux(might).
-aux(will).
-aux(would).
-aux(must).
-aux(can).
-aux(could).
-aux(shall).
-aux(ought).
+% Note to self: Find out how to word modals are represented in brown e.g. "ought to/have to/can leave/might play"
+modal(should).
+modal(may).
+modal(might).
+modal(will).
+modal(would).
+modal(must).
+modal(can).
+modal(could).
+modal(shall).
+modal(ought).
+
+aux_str(StrList) :-
+	aux(Atom),
+	atom_chars(Atom,StrList).
+
+aux(@aux_str(X)) ==> [X].
