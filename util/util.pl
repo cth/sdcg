@@ -174,7 +174,7 @@ set_equal(Set1,Set2) :-
 % which expands to: r(a) ==> [a]. and r(b) ==> [b].
 enum(List,Value) :-
 	ground(List), 
-	member(Value,List), !.
+	member(Value,List).
 
 enum(Value,Value).
 	
