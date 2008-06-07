@@ -5,19 +5,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Accusative: (brown tag WPO)
-relative_pronoun(accusative,@human(G),'whom') ==> [ 'whom' ].
-relative_pronoun(accusative,@human(G),'who') ==> [ 'who' ].
-relative_pronoun(accusative,@non_human(G),'that') ==> [ 'that' ].
+relative_pronoun(accusative,@human(_G),@enum([who,whom],Stem)) ==> [Stem].
+relative_pronoun(accusative,neut,@enum([that,what,which],Stem)) ==> [Stem].
 
 % Nominative:
-relative_pronoun(nominative,@human(G),'who') ==> ['who'].
-relative_pronoun(nominative,@human(G),'whoever') ==> ['whoever'].
-relative_pronoun(nominative,@human(G),'whosoever') ==> ['whosoever'].
-relative_pronoun(nominative,@non_human(G),'that') ==> ['that'].
-relative_pronoun(nominative,@non_human(G),'what') ==> ['what'].
-relative_pronoun(nominative,@non_human(G),'whatever') ==> ['whatever'].
-relative_pronoun(nominative,@non_human(G),'whatsoever') ==> ['whatsoever'].
+relative_pronoun(nominative,@human(_G),@enum([who,whoever, whosoever],Stem)) ==> [Stem].
+relative_pronoun(nominative,neut,@enum([that,what,whatever,whatsoever],Stem)) ==> [Stem].
 
 % Genitive:
-relative_pronoun(genitive,@human(G),'whose') ==> ['whose'].
-relative_pronoun(genitive,@human(G),'whosever') ==> ['whosever'].
+relative_pronoun(genitive,@human(_G),@enum([whose,whosever],Stem)) ==> [Stem].

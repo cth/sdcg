@@ -44,12 +44,12 @@ present_tense_verb_base(run).
 present_tense_verb_base(enter).
 present_tense_verb_base(force).
 
-%verb(@number(Number),present,@not_person(third),@valency_not(ditransitive,Valency),investigate) ==> [investigate].
-%verb(@number(Number),present,@not_person(third),@valency_all(Valency),find) ==> [find].
-%verb(@number(Number),present,@not_person(third),@valency_not(ditransitive,Valency),act) ==> [find].
-%verb(@number,present,@not_person(third),transitive,investigate) ==> [investigate].
+%verb(@num(Number),present,@not_person(third),@valency_not(ditransitive,Valency),investigate) ==> [investigate].
+%verb(@num(Number),present,@not_person(third),@valency_all(Valency),find) ==> [find].
+%verb(@num(Number),present,@not_person(third),@valency_not(ditransitive,Valency),act) ==> [find].
+%verb(@num,present,@not_person(third),transitive,investigate) ==> [investigate].
 
-verb(@number(N),present,@exclude(person,second,P),@present_tense_verb_base(V)) ==> [V].
+verb(@num(_Number),present,@exclude(person,second,_Person),@present_tense_verb_base(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Common verbs, present tense 3rd person
@@ -82,10 +82,7 @@ present_tense_third_person_verb(gives).
 present_tense_third_person_verb(seeks).
 present_tense_third_person_verb(reads).
 
-verb_third_str(V) :-
-	stringify(present_tense_third_person,V).
-
-verb(sing,present,third,@present_3rd_verb(V)) ==> [V].
+verb(sing,present,third,@present_tense_third_person_verb(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Some past tense verbs
@@ -116,11 +113,8 @@ past_tense_verb(scheduled).
 past_tense_verb(feared).
 past_tense_verb(promised).
 
-past_verb(X) :-
-	stringify(past_tense_verb,X).
-
 % A rule for representing past tense verbs
-verb(@number(N),past,@person(P),@past_verb(V)) ==> [V].
+verb(@num(_Number),past,@person(_Person),@past_tense_verb(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Past participle
@@ -149,19 +143,16 @@ past_participle_verb(composed).
 past_participle_verb(gotten).
 past_participle_verb(printed).
 
-past_part_verb_str(X) :-
-	stringify(past_participle_verb,X).
-
 % A rule for representing past tense verbs.
-verb(@number(N),past-participle,@person(P),@past_part_verb_str(V)) ==> [V].
+%verb(@num(_Number),past-participle,@person(_Person),@past_particle_verb(V)) ==> [V].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Gerund verbs
 % Gerund verbs have no additional features (other than begin gerund)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% VBG corresponds to gerunds in Brown
+% VBG corresponds to_gerunds in Brown
 
-gerund_verb(being)
+gerund_verb(being).
 gerund_verb(preferring).
 gerund_verb(arriving).
 gerund_verb(requiring).
@@ -186,33 +177,31 @@ gerund_verb(attending).
 gerund_verb(participating).
 gerund_verb(moving).
 
-gerund_str(X) :-
-	stringify(gerund_verb,X)
-
 % A rule for gerund verbs
-gerund_verb(@gerund_str(V)) ==> [V].
+gerund_verb(@gerund_verb(V)) ==> [V].
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Auxillaries
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % special auxilary verbs
 
-verb(@number(N),present,third,'to do') ==> [ 'does' ].
-verb(@number(N),present,@exclude(third,Person),'to do') ==> [ 'do' ].
-verb(@number(N),past,@person(P),'to do') ==> [ 'did' ].
+verb(@num(_Number),present,third,to_do) ==> [ does ].
+verb(@num(_Number),present,@exclude(person,third,_Person),to_do) ==> [ do ].
+verb(@num(_Number),past,@person(_Person),to_do) ==> [ did ].
 
-verb(@number(N),present,third,'to have') ==> [ 'has' ].
-verb(@number(N),present,@exclude(third,Person),'to have') ==> [ 'have' ].
-verb(@number(N),past,@person(P),'to have') ==> [ 'had' ].
+verb(@num(_Number),present,third,to_have) ==> [ has ].
+verb(@num(_Number),present,@exclude(person,third,_Person),to_have) ==> [ have ].
+verb(@num(_Number),past,@person(_Person),to_have) ==> [ had ].
 
-verb(@number(N),present,third,'to be') ==> [ 'is' ].
-verb(@number(N),present,@exclude(third,Person),'to be') ==> [ 'have' ].
-verb(sing,past,@person(P),'to be') ==> [ 'was' ].
-verb(plural,past,@person(P),'to be') ==> [ 'were' ].
+verb(@num(_Number),present,third,to_be) ==> [ is ].
+verb(@num(_Number),present,@exclude(person,third,_Person),to_be) ==> [ have ].
+verb(sing,past,@person(_Person),to_be) ==> [ was ].
+verb(plural,past,@person(_Person),to_be) ==> [ were ].
 
-% From Brown. There is seems to be no tense distinction :-(
+% From Brown. There is seems to_be no tense distinction :-(
 % e.g. "will" and "would" are both under the same tag (MD)
-% Note to self: Find out how to word modals are represented in brown e.g. "ought to/have to/can leave/might play"
+% Note to_self: Find out how to word modals are represented in brown e.g. "ought to/have to/can leave/might play"
 modal(should).
 modal(may).
 modal(might).
@@ -224,8 +213,4 @@ modal(could).
 modal(shall).
 modal(ought).
 
-modal_str(StrList) :-
-	aux(Atom),
-	atom_chars(Atom,StrList).
-
-modal(@modal_str(X)) ==> [X].
+modal(@modal(X)) ==> [X].

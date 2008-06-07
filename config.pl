@@ -3,26 +3,25 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Absolute path where the sdcg code is located
-basedir('/Users/christianhave/code/sdcg/').
+basedir('/Users/christianhave/code/sdcg/sdcg/').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % You should not have to edit this section
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+resolve_path(Relative,Absolute) :-
+	basedir(Basedir),
+	atom_codes(Basedir,BasedirChars),
+	atom_codes(Relative,RelativeChars),
+	append(BasedirChars,RelativeChars,AbsoluteChars),
+	atom_codes(Absolute,AbsoluteChars).
+	
 % require compiles and loads a file within the distribution based
 % on a path relative to the base directory
 require(File) :-
-	basedir(Basedir),
-	atom_codes(Basedir,BasedirChars),
-	atom_codes(File,FileChars),
-	append(BasedirChars,FileChars,LoadFileChars),
-	atom_codes(LoadFile,LoadFileChars),
-	cl(LoadFile).
+	resolve_path(File,AFile),
+	cl(AFile).
 	
-include(File):-
-	basedir(Basedir),
-	atom_codes(Basedir,BasedirChars),
-	atom_codes(File,FileChars),
-	append(BasedirChars,FileChars,LoadFileChars),
-	atom_codes(LoadFile,LoadFileChars),
-	[LoadFile].
+include_rel(File):-
+	resolve_path(File,AFile),
+	[AFile].

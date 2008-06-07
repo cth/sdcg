@@ -11,7 +11,6 @@ adjective(latest).
 adjective(other).
 adjective(direct).
 
-adj_str(A) :-
-	stringify(adjective,X).
-	
-adjective(Stem) ==> [Stem].
+%adj_str(A) :-q_stringify(adjective,A).
+
+adjective(@enum(adjective,Stem)) ==> [Stem].

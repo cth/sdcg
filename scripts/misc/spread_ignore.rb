@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # Spread the toplevel .gitignore into all subdirs
 # Christian Theil Have, 2008.
 

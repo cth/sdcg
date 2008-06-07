@@ -162,4 +162,50 @@ combine_two([E1|R1], [E2|R2], Combined) :-
 % True is the two sets are equal
 set_equal(Set1,Set2) :-
 	subtract(Set1,Set2,[]).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Various utilities which are not directly used by the compiler,
+% but is practical when creating grammars.
+% Most of these functions can be applied with @ expansions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Allows creating rules like
+% r(@enum([a,b],AB) ==> [AB].
+% which expands to: r(a) ==> [a]. and r(b) ==> [b].
+enum(List,Value) :-
+	ground(List), 
+	member(Value,List), !.
+
+enum(Value,Value).
+	
+enum_q(List,QuotedValue) :-
+	enum(List,Value),
+	extra_quotes(Value,QuotedValue).
+
+exclude(Pred,Atom,Value) :-
+	atom(Atom),
+	exclude(Pred,[Atom],Value).
+exclude(Pred,List,Value) :-
+	C =.. [ Pred, Value],
+	call(C),
+	not member(Value,List).
+
+quote_all(Pred,Quoted) :-
+	ToCall =.. [Pred,AtomValue],
+	call(ToCall),
+	extra_quotes(AtomValue,Quoted).
+	
+quote_all_twice(Pred,QuotedTwice) :-
+	quote_all(Pred,QuotedOnce),
+	extra_quotes(QuotedOnce,QuotedTwice).
+
+%q_string_all(Pred,QString) :-
+%	stringify(Pred,String),
+%	extra_quotes(String,QString).
+
+extra_quotes(InputAtom,Quoted) :-
+	atom_chars(InputAtom,Str),
+	atom_chars('\'',Quote),
+	append(Quote, Str, QuoteStr),
+	append(QuoteStr,Quote,QuotedString),
+	atom_chars(Quoted,QuotedString).

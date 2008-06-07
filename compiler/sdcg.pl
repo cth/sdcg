@@ -355,6 +355,13 @@ sdcg(File) :-
 	section('Load and compile stage'),
 	%sdcg_debug(listing),
 	sdcg_compile.
+	
+	
+% Parse a list of files
+%sdcg_parse([]).
+%sdcg_parse([File|FilesRest]) :-
+%	sdcg_parse(File),
+%	sdcg_parser(FilesRest).
 
 sdcg_parse(File) :-
 	sdcg_debug((write('Loading SDCG in '), write(File), nl)),
@@ -402,7 +409,7 @@ sdcg_compile :-
 	sdcg_option(prism_file, OutFile),
 	write_prism_program_to_file(OutFile),
 	sdcg_debug(section('FOC compilation')),
-	sdcg_debug(fo_trace),
+	%sdcg_debug(fo_trace),
 	sdcg_option(prism_invoker,PI),
 	InvokePRISM =.. [ PI, OutFile ],
 	call(InvokePRISM).

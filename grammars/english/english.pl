@@ -36,15 +36,15 @@ s((aux(Stem),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==
 % Do/have behave quite differently in question like sentences.
 % do: VP in present tense -- Do they stop?
 % did: VP in present tense -- Did they think about it?
-s((verb(VNumber,VTense,VPerson,'to do'),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
-	verb(VNumber,VTense,VPerson,'to do')),
+s((verb(VNumber,VTense,VPerson,to_do),np(NPTree,Number,Person,Gender),vp(VPTree,Number,present,Person))) ==>
+	verb(VNumber,VTense,VPerson,to_do),
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,present,Person).
 
 % have: VP in past tense --	Have any people come?, have you done it?
 % had: VP in past tense -- Had they thought about it?
-s((verb(VNumber,VTense,VPerson,'to have'),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
-	verb(VNumber,VTense,Person,'to have')),
+s((verb(VNumber,VTense,VPerson,to_have),np(NPTree,Number,Person,Gender),vp(VPTree,Number,past,Person))) ==>
+	verb(VNumber,VTense,VPerson,to_have),
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,past,Person).
 
@@ -52,7 +52,7 @@ s((verb(VNumber,VTense,VPerson,'to have'),np(NPTree,Number,Person,Gender),vp(VPT
 % wh-subject-question
 % Which flights serve breakfeast?
 s((wh_determiner(Stem),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
-	wh_determiner(WHStem),
+	wh_determiner(Stem),
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,Tense,Person).
 
@@ -61,10 +61,10 @@ s((wh_determiner(Stem),np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Pe
 % What flights do you have from A to B?
 % What traits did he show?
 % *How do you do?
-s((wh(WHStem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPerson,Stem),np(NPTree2,NPNumber2,NPPerson2,NPGender2),vp(VPTree,VPNumber,present,VPPerson))) ==>
-	wh(WHStem), 
+s((wh_determiner(Stem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPerson,to_do),np(NPTree2,NPNumber2,NPPerson2,NPGender2),vp(VPTree,VPNumber,present,VPPerson))) ==>
+	wh_determimer(Stem),
 	np(NPTree1,NPNumber1,NPPerson1,NPGender1),
-	verb(VNumber,VTense,VPerson,'to do'),
+	verb(VNumber,VTense,VPerson,to_do),
 	np(NPTree2,NPNumber2,NPPerson2,NPGender2),
 	vp(VPTree,VPNumber,present,VPPerson), % is always in present tense
 	% We do explicit agreement for this one, as it is a bit complicated.
@@ -73,12 +73,12 @@ s((wh(WHStem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPer
 		VNumber == NPNumber1,
 		VPerson == NPPerson1
 	}.
-	
+
 % Which editor have you used
-s((wh(WHStem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPerson,Stem),np(NPTree2,NPNumber2,NPPerson2,NPGender2),vp(VPTree,VPNumber,present,VPPerson))) ==>
-	wh(WHStem), 
+s((wh_determiner(Stem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPerson,to_do),np(NPTree2,NPNumber2,NPPerson2,NPGender2),vp(VPTree,VPNumber,present,VPPerson))) ==>
+	wh_determiner(Stem),
 	np(NPTree1,NPNumber1,NPPerson1,NPGender1),
-	verb(VNumber,VTense,VPerson,'to have'),
+	verb(VNumber,VTense,VPerson,to_do),
 	% aux(Num2), % _^ 
 	np(NPTree2,NPNumber2,NPPerson2,NPGender2),
 	vp(VPTree,VPNumber,past,VPPerson), % is always past tense
@@ -91,17 +91,17 @@ s((wh(WHStem),np(NPTree1,NPNumber1,NPPerson1,NPGender1),verb(VNumber,VTense,VPer
 
 % A very simple account of fronting:
 % On the table.
-s((pp(PPTree,PPCountable,PPNumber,PPGender)) ==>
+s(pp(PPTree,PPCountable,PPNumber,PPGender)) ==>
 	pp(PPTree,PPCountable,PPNumber,PPGender).
 
 % On tuesday, it will happen.
-s((pp(PPTree,PPCountable,PPNumber,PPGender),comma,s(STree)) ==>
+s((pp(PPTree,PPCountable,PPNumber,PPGender),comma,s(STree))) ==>
 	pp(PPTree,PPCountable,PPNumber,PPGender),
 	comma,
 	s(STree).
 
 % Conjuction of sentences:
-s((s(STree1),conjunction(Stem),s(STree2)) ==> 
+s((s(STree1),conjunction(Stem),s(STree2))) ==>
 	s(STree1),
 	conjunction(Stem),
 	s(STree2).
@@ -115,12 +115,12 @@ s((s(STree1),conjunction(Stem),s(STree2)) ==>
 
 % vp --> verb.
 % It [sucks].
-vp((verb(Number,Tense,Person,Stem)),Number,Tense,Person) :-
+vp((verb(Number,Tense,Person,Stem)),Number,Tense,Person) ==>
 	verb(Number,Tense,Person,Stem).
 	
 % vp --> modal, verb.
 % It will happen.
-vp((modal(ModalStem),vp(Number,Tense,Person,VerbStem)),Number,Tense,Person) :-
+vp((modal(ModalStem),vp(Number,Tense,Person,VerbStem)),Number,Tense,Person) ==>
 	modal(ModalStem),
 	vp(Number,Tense,Person,VerbStem).
 
@@ -129,9 +129,12 @@ vp((modal(ModalStem),vp(Number,Tense,Person,VerbStem)),Number,Tense,Person) :-
 % Examples:
 % Prefer a morning flight.
 % Help yourself.
-vp((verb(VNumber,Tense,VPerson,VStem),np(NPTree,NPPerson,NPNumber,@enum([objective,reflexive],Case), NPCase), VNumber,VTense,VPerson) ==>
+vp((verb(VNumber,VTense,VPerson,VStem),np(NPTree,NPPerson,NPNumber,objective)), VNumber,VTense,VPerson) ==>
 	verb(VNumber,VTense,VPerson,VStem),
-	np(NPTree,NPPerson,NPNumber,Case).
+	np(NPTree,NPPerson,NPNumber,objective).
+vp((verb(VNumber,VTense,VPerson,VStem),np(NPTree,NPPerson,NPNumber,reflexive)), VNumber,VTense,VPerson) ==>
+	verb(VNumber,VTense,VPerson,VStem),
+	np(NPTree,NPPerson,NPNumber,reflexive).
 	
 % vp --> verb, np, pp.
 % Examples:
@@ -140,13 +143,13 @@ vp((verb(VNumber,Tense,VPerson,VStem),np(NPTree,NPPerson,NPNumber,@enum([objecti
 vp((verb(VNumber,VTense,VPerson,VStem),np(NPTree,NPPerson,NPNumber,NPCase),pp(PPTree,PPCountable,PPNumber,PPGender)), VNumber,VTense,VPerson) ==>
 	verb(VNumber,VTense,VPerson,VStem),
 	np(NPTree,NPPerson,NPNumber,NPCase),
-	pp(PPTree,PPCountable,PPNumber,PPCase).
+	pp(PPTree,PPCountable,PPNumber,PPGender).
 
 % vp --> verb,pp.
 % work on thursday
-vp((verb(VNumber,VTense,VPerspon,VStem),pp(PPTree,PPCountable,PPNumber,PPGender)),VNumber,VTense,VPerson) ==>
+vp((verb(VNumber,VTense,VPerson,VStem),pp(PPTree,PPCountable,PPNumber,PPGender)),VNumber,VTense,VPerson) ==>
 	verb(VNumber,VTense,VPerson,VStem),
-	pp(PPTree,PPCountable,PPNumber,PPCase).
+	pp(PPTree,PPCountable,PPNumber,PPGender).
 
 % vp --> vp,conjunction,vp.
 % Examples:
@@ -159,27 +162,31 @@ vp((verb(VNumber,VTense,VPerspon,VStem),pp(PPTree,PPCountable,PPNumber,PPGender)
 % (The flights) are leaving Denver and arrive in San Francisco.
 % *(The flights) leave Denver and arriving in San Francisco.
 % Do we need some agreement here? Problem is that the above sentence uses gerund verbs.
-vp((vp(Tree1,Number,Tense1,Person),conjunction(Stem),vp(Tree2,Number,Tense2,Person)),Number,Tense,Person) ==>
+vp((vp(Tree1,Number,Tense1,Person),conjunction(Stem),vp(Tree2,Number,Tense2,Person)),Number,Tense1,Person) ==>
 	vp(Tree1,Number,Tense1,Person),
 	conjunction(Stem),
 	vp(Tree2,Number,Tense2,Person).
+vp((vp(Tree1,Number,Tense1,Person),conjunction(Stem),vp(Tree2,Number,Tense2,Person)),Number,Tense2,Person) ==>
+	vp(Tree1,Number,Tense1,Person),
+	conjunction(Stem),
+	vp(Tree2,Number,Tense2,Person).	
 	
 % vp --> verb("to be" or to "have")
 % was modernizing
 % is/are modernizing
 % were modernizing
 % -- There might be a problem with infinitive forms of "to be". Depends on how I decide to represent infinitives.
-vp((verb(Number,Tense,Person,Stem), gerund_vp(GVPTree)),Number,Tense,Person) ==>
-	verb(Number,Tense,Person,'to be'),
+vp((verb(Number,Tense,Person,to_be), gerund_vp(GVPTree)),Number,Tense,Person) ==>
+	verb(Number,Tense,Person,to_be),
 	gerund_vp(GVPTree).
 
 % vp --> verb('to be'),verb('to have'), gerund_vp
 % has been modernizing: Tense is "present perfect"
 % had been modernizing: Tense is "past perfect"
 % *had modernizing
-vp((verb(Number,Tense,Person,Stem), gerund_vp(GVPTree)),Number,Tense,Person) ==>
-	verb(Number,Tense,Person,'to have'),
-	verb(Number1,past-participle,Person,'to be'), % been
+vp((verb(Number,Tense,Person,to_have), verb(Number1,past-participle,Person,to_be),gerund_vp(GVPTree)),Number,Tense,Person) ==>
+	verb(Number,Tense,Person,to_have),
+	verb(Number1,past-participle,Person,to_be), % been
 	gerund_vp(GVPTree).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -198,7 +205,7 @@ gerund_vp((gerund_Verb(Stem),pp(PPTree,PPCountable,PPNumber,PPCase)),Stem) ==>
 	
 gerund_vp((gerund_verb(Stem),np(NPTree,Number,Person,Gender), pp(PPTree,PPCountable,PPNumber,PPCase)),Stem) ==>
 	gerund_verb(Stem),
-	np(NPTree,Number,Person,Genders),
+	np(NPTree,Number,Person,Gender),
 	pp(PPTree,PPCountable,PPNumber,PPCase).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -245,14 +252,21 @@ np((pronoun(Number,Person,Case,Gender)),Number,Person,Gender) ==>
 % np --> np, conjunction, np.
 % Conjoined noun-phrases. The are always plural.
 % Men and boys	 : Good question.. Should gender be masc?
+% Men and women	
 % You or them	 : Gender=none
 % Fire and water : Person=none,Gender=noune
 % * Fire and you
 % us and them		- damnit (second and third person, so person might not match).
-np((np(NPTree1,Number1,Person1,Gender1),conjunction(CStem),np(NPTree2,Number2,Person2,Gender2)),plur,Person,Gender) ==>
-	np(NPTree1,Number1,Person1,Gender1),
+% *he and she
+% *we and they
+% --> must be third person
+np((np(NPTree1,Number1,Person,Gender1),conjunction(CStem),np(NPTree2,Number2,Person,Gender2)),plur,Person,neut) ==>
+	np(NPTree1,Number1,Person,Gender1),
 	conjunction(CStem),
-	np(NPTree2,Number2,Person2,Gender2).
+	np(NPTree2,Number2,Person,Gender2),
+	{
+		Person == third
+	}.
 
 % np --> ap, nominal.
 % Adjective phrase and nominal.
@@ -337,7 +351,7 @@ nominal(noun(Countable,Number,Gender,Stem),Countable,Number,Gender) ==>
 % Not sure about number agreement here. For instance "the executives" Probably search brown for to nouns in a row. It seems though
 % that it goes: [sing,sing] or [sing,plur] 
 nominal((noun(Countable1,Number1,Gender1,Stem1),nominal(NomTree,Countable2,Number2,Gender2)), Countable2,Number2,Gender2) ==>
-	noun(Contable1,Number1,Gender1,Stem1),
+	noun(Countable1,Number1,Gender1,Stem1),
 	nominal(NomTree,Countable2,Number2,Gender2).
 
 %% Some nouns have post-modifiers:
@@ -360,14 +374,14 @@ nominal((nominal(NomTree,Countable1,Number1,Gender1),pp(PPTree,Countable2,Number
 % This should not be allowed with pronouns!!!
 nominal((nominal(NomTree,Countable,Number,Gender),gerund_vp(VPTree)), Countable, Number, Gender) ==>
 	nominal(NomTree,Countable,Number,Gender),
-	gerund_vp(VPTre).
+	gerund_vp(VPTree).
 
 % nominal --> nominal, relative_clause
 % Nominals occuring with relative clauses:
 % The boy who sings.
 nominal((nominal(NomTree,Countable,Number,Gender),relative_clause(RCTree)),Countable,Number,Gender) ==>
 	nominal(NomTree,Countable,Number,Gender),
-	relative_clause(RCTree,Number,Gender,Person,Tense).
+	relative_clause(RCTree,Number,Gender,_Person,_Tense). % FIXME
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Relative clauses
@@ -380,12 +394,12 @@ nominal((nominal(NomTree,Countable,Number,Gender),relative_clause(RCTree)),Count
 % The boy whom the girl loves.
 % We could have different rules for this, but Brown doesn't distiguish who/whom tagwise..
 
-% The man who sings.
-% The man who sing.
-% The man who sang.
-% The thing that works.
-relative_clause((relative_pronoun(Number,Gender,Person),vp(Tree1,Number,Tense,Person)),Number,Gender,Person,Tense) ==>
-	relative_pronoun(accusative,Gender), % that,who etc.
+% The man [who sings].
+% The man [who sing].
+% The man [who sang].
+% The thing [that works].
+relative_clause((relative_pronoun(Number,Gender,Stem),vp(VPTree,Number,Tense,Person)),Number,Gender,Person,Tense) ==>
+	relative_pronoun(accusative,Gender,Stem), % that,who etc.
 	vp(VPTree,Number,Tense,Person).
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

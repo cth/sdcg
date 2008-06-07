@@ -8,17 +8,7 @@
 % Number: sing/plur
 % Gender: masc/fem/neut
 
-det(sing,@gender(G),a) ==> [a].
-det(sing,@gender(G),an) ==> [an].
-det(sing,@gender(G),the) ==> [the].
-det(plur,@gender(G),the) ==> [the].
-
-det(sing,@gender(G),this) ==> [this].
-det(sing,@gender(G),that) ==> [that].
-det(plur,@gender(G),these) ==> [these].
-det(plur,@gender(G),those) ==> [those].
-
-det(@number(N),@gender(G),some) ==> [some].
-det(@number(N),@gender(G),every) ==> [every].
-
-wh_determiner(@enum([which,what,whatever,whichever,whichever-the-hell],Stem)) ==> [Stem].
+det(sing,@gender(_G),@enum([a,an,this,that],Stem)) ==> [Stem].
+det(plur,@gender(_G),@enum([the,these,those],Stem)) ==> [Stem].
+det(@num(_N),@gender(_G),@enum([the,some,every],Stem)) ==> [Stem].
+wh_determiner(@enum([which,what,whatever,whichever],Stem)) ==> [Stem].

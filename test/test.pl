@@ -182,3 +182,29 @@ test_expand_feature :-
 	expand_feature(@blah(a,X,Y,c,d),Expander2,[X,d]),
 	Expander2==blah(a,X,Y,c,d),
 	retract(expand_mode(blah(-,+,-,-,+))).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test various
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+test_extra_quotes :-
+	extra_quotes('my string','\'my string\'').
+	
+print_list([]).
+print_list([Item|Rest]) :-
+	atom_codes(Item,Str),
+	write(Str),nl,
+	print_list(Rest).
+
+test_quote_all :-
+	assert(test(a)),
+	assert(test(b)),
+	findall(X,quote_all(test,X),L),
+	%print_list(L),
+	L==['\'a\'','\'b\''],
+	retract(test(a)),
+	retract(test(b)).	
+	
+	
+	
+	

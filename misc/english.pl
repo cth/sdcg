@@ -1,6 +1,4 @@
-
 :- cl('../compiler/sdcg.pl').
-
 :- sdcg_set_option(debug,yes).
 :- sdcg_set_option(prism_invoker,prism).
 :- sdcg('../grammars/english.pl').
