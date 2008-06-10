@@ -13,6 +13,7 @@ noun(countable,sing,neut,department) ==> [department].
 noun(countable,plur,neut,department) ==> [departments].
 noun(countable,sing,neut,person) ==> [person].
 noun(countable,plur,neut,person) ==> [persons].
+/*
 
 noun(countable,sing,masc,man) ==> [man].
 noun(countable,plur,masc,man) ==> [men].
@@ -34,6 +35,7 @@ noun(countable,sing,neut,budget) ==> [budget].
 noun(countable,plur,neut,budget) ==> [budgets].
 noun(countable,sing,neut,computer) ==> [computer].
 noun(countable,plur,neut,computer) ==> [computers].
+*/
 
 noun(countable,plur,neut,service) ==> [service].
 noun(countable,plur,neut,service) ==> [services].

@@ -9,13 +9,13 @@ sdcg ==> s(_).
 
 % Basic np vp sentences
 % Example: I prefer the morning flight
-s ==>
+s(np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person)) ==>
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,Tense,Person).
 
 % Imperative structure verb sentences. Have no subject.
 % Example: Show the lowest fare
-s ==>
+s(vp(Tree,Number,Tense,Person)) ==>
 	vp(Tree,Number,Tense,Person).
 	
 	
