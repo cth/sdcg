@@ -1,6 +1,7 @@
 % Assumes that SDCG compiler is loaded.
 lexicon_directory("grammars/english/simplelex/").
-lexicon_files([helpers,relative,noun,determiner,preposition,punctuation,relative,verb]). %,other,preposition,punctuation,relative,verb]).
+lexicon_files([helpers,noun,determiner,preposition,punctuation,relative,verb,other]). 
+
 only_some_lexicon_files([helpers,noun,verb]). %,other,preposition,punctuation,relative,verb]).
 %lexicon_files([helpers,verb]).
 

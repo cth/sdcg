@@ -9,7 +9,7 @@ sdcg ==> s(_).
 
 % Basic np vp sentences
 % Example: I prefer the morning flight
-s(np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person)) ==>
+s((np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,Tense,Person).
 

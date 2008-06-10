@@ -16,14 +16,21 @@ person(first).
 person(second).
 person(third).
 
+tense(present).
+tense(past).
+tense(past-participle).
+
 case(subjective).
 case(objective).
 case(possesive-determiner).
 case(possesive-pronoun).
 case(reflexive).
 
-possessive(possesive-determiner).
-possessive(possesive-nomimal).
+countable(countable).
+countable(mass).
+
+possesive(possesive-determiner).
+possesive(possesive-nomimal).
 
 subj_obj(subjective).
-subj_obj(objective).	
+subj_obj(objective).

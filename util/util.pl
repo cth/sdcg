@@ -174,7 +174,7 @@ set_equal(Set1,Set2) :-
 % which expands to: r(a) ==> [a]. and r(b) ==> [b].
 enum(List,Value) :-
 	ground(List), 
-	member(Value,List).
+	member(Value,List), !.
 
 enum(Value,Value).
 	
@@ -204,8 +204,8 @@ quote_all_twice(Pred,QuotedTwice) :-
 %	extra_quotes(String,QString).
 
 extra_quotes(InputAtom,Quoted) :-
-	atom_chars(InputAtom,Str),
-	atom_chars('\'',Quote),
+	atom_codes(InputAtom,Str),
+	atom_codes('\'',Quote),
 	append(Quote, Str, QuoteStr),
 	append(QuoteStr,Quote,QuotedString),
-	atom_chars(Quoted,QuotedString).
+	atom_codes(Quoted,QuotedString).

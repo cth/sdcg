@@ -6,7 +6,7 @@ sdcg ==> s(_).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % s: Sentence types
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-s(np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person)) ==>
+s((np(NPTree,Number,Person,Gender),vp(VPTree,Number,Tense,Person))) ==>
 	np(NPTree,Number,Person,Gender),
 	vp(VPTree,Number,Tense,Person).
 	

@@ -351,11 +351,10 @@ regex_rule_kleene(_,NewConstituent,Rule) :-
 
 % Load, parse and compile the grammar given in File
 sdcg(File) :-
-	sdcg_parse(File), !,
+	sdcg_parse(File),
 	section('Load and compile stage'),
 	%sdcg_debug(listing),
 	sdcg_compile.
-	
 	
 % Parse a list of files
 %sdcg_parse([]).
