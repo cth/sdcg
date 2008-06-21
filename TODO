@@ -1,6 +1,15 @@
 TODO
 ====
 
+MISC STUFF:
+	- The config.pl 'require' doesn't really work that well. Ideally, it should check 
+	  whether the path is absolute or not and act accordingly. And sdcg/1 should use
+	  the same functionality.
+	- Make depth parameter optional.
+	- Make a datafile option
+	- More sanity checks on the grammar. It would be nice if the compiler could check 
+	  various low-hanging fruits before FOC commences.
+
 FOC compilation:
 - Implement all rules with a "rule" clause, where the implementation rule is matched
 - Get rid of consume. replace consume/3 replaced by "in-rule" consumption.
@@ -117,4 +126,12 @@ Here is one way:
 
 
 Algorithm for converting parse trees to rules:
+
+=====
+
+
+Noter til feature annotations:
+
+
+
 

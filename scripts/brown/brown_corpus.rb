@@ -156,4 +156,53 @@ module Corpus
       clauses
     end
   end
+  
+  def tag_descriptions
+    doc = Hpricot(open('http://www.scs.leeds.ac.uk/ccalas/tagsets/brown.html'))
+    tag_descriptions = []
+    tag_keywords = {}
+  	(doc/"html"/"table"/"tr").each do |tr|
+  	  idx=1
+  	  tag = description = examples = nil
+  	  (tr/"td").each do |d|
+  	    text = d.inner_text.strip.tr("\n", ' ').gsub(/\s+/, ' ')
+  	    case idx
+        when 1; tag = text.downcase
+        when 2; description = text
+        when 3; examples = text
+        end
+  	    idx += 1
+      end
+      tag_descriptions << [ tag, description, examples ] unless tag.nil? or tag == "Tag"
+      # Use the descriptions to pull out some search keywords for the tag
+      if not tag.nil? and description.nil?
+        puts "Description for " + tag + " is nil!!!"
+      end
+  	end
+  	tag_descriptions
+  end
+  
+  def tag_desc_latex_table()
+    escape = lambda { |str| str.gsub(/\$/, "\\$") }  
+    start_table = '\begin{center}\begin{tabular}{| l | p{30em} |} \hline'
+    end_table = '\end{tabular}\end{center}'
+    (latex_table ||= []) << start_table
+
+    lines = 1
+    tag_descriptions.each do |td|
+      if lines % 33 == 0
+        latex_table << end_table
+        latex_table << start_table
+        #latex_table << '\newpage'
+      end
+      if lines == 1 or lines % 33 == 0
+        latex_table << "\\textbf{Tag} & \\textbf{Description}\\\\"
+      else
+        latex_table << "#{(escape.call(td[0])).upcase} & #{td[1]}\\\\"
+      end
+      latex_table << '\hline'
+      lines += 1
+    end
+    latex_table << end_table
+  end
 end

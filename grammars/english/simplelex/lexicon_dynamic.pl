@@ -287,3 +287,12 @@ lex(gerund_verb,Word) :-
 % Note to_self: Find out how to word modals are represented in brown e.g. "ought to/have to/can leave/might play"
 lex(modal_verb,Word) :-
 	enum([should,may,might,will,would,must,can,could,shall,ought],Word).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Adverbs 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+lex(adverb,Word) :-
+	enum([only, often, generally, also, nevertheless, upon, together, back, newly, no, likely,
+		meanwhile, near, then, heavily, there, apparently, yet, outright, fully, aside, consistently,
+		specifically, formally, ever, just], Word).

@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Absolute path where the sdcg code is located
-basedir('/Users/christianhave/code/sdcg/sdcg/').
+basedir('/Users/cth/code/sdcg/').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % You should not have to edit this section

@@ -13,33 +13,47 @@
 :- dynamic sdcg_user_option/2.
 :- dynamic sdcg_start_definition/2.
 
-:- require('util/util.pl').
+:- catch(require('util/util.pl'), _, cl('../util/util.pl')).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SDCG Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 sdcg_default_option(start_symbol, sdcg).
-sdcg_default_option(maxdepth, 10).
+sdcg_default_option(maxdepth, false).
+sdcg_default_option(parsetree, false).
+sdcg_default_option(parsetree_include_difflists,false).
 sdcg_default_option(prism_file, 'generated_sdcg.psm').
 sdcg_default_option(prism_invoker, prismn). % Use prismn (with FOC/FAM as default)
-sdcg_default_option(debug,no).
+sdcg_default_option(debug,false).
 
 sdcg_option(Opt, Val) :-
 	(clause(sdcg_user_option(Opt,_),_) -> sdcg_user_option(Opt,Val) ; sdcg_default_option(Opt,Val)).
 
+sdcg_option(Opt) :-
+	sdcg_option(Opt,true).
+	
 sdcg_set_option(Opt,Val) :-
 	check_valid_option(Opt,Val),
-	retractall(sdcg_user_option(Opt,_)), % Discard old value if present
+	sdcg_unset_option(Opt), % Discard old value if present
 	assert(sdcg_user_option(Opt,Val)).
+
+% If the only thing an option can be set to is true, why use two args?
+sdcg_set_option(Opt) :-
+	sdcg_set_option(Opt,true).
+
+sdcg_unset_option(Opt) :-
+	retractall(sdcg_user_option(Opt,_)).
 	
 % The first rule assures that it is an atom.
 % Some options are checked by an option specific rule checking which will throw an exception on errors. 
 % If no such rule for an option, it will be matches by the last rule, and thus succeed.
 check_valid_option(debug, V) :- 
-	(V == yes) ; (v == no) ; throw(invalid_value_for_debug(V)).
+	(V == true) ; throw(invalid_value_for_debug(V)).
 check_valid_option(maxdepth, V) :-
 	integer(V), V > 0.
+check_valid_option(parsetree,V) :-
+	V == true ; throw(invalid_option_value(parsetree,V),reason(must_be_true)).
 check_valid_option(Opt,Val) :-
 	atom(Val) ; throw(invalid_option_value(Opt,Val),reason(not_atom)).
 
@@ -77,13 +91,16 @@ rewrite_start_rule(LHS,RHS) :-
 	% an exception if this is not the case.
 	sdcg_option(start_symbol,StartSymbol),
 	(clause(values(sdcg_start_definition,Def),_) -> throw(error(sdcg_start_symbol_already_defined(Def))) ; true),
-	% Rewrite with difference list:
+	% Add diference lists to LHS:
 	LHS =.. [ StartSymbol | Features ],
-	append(Features,[InList,OutList], Params),
-	NewLHS =.. [ StartSymbol | Params ],
-	rewrite_rule_rhs(InList,OutList,0,RHS,NewRHS),
+	append(Features,[In,Out], WithDiffList),
+	% Add parse tree feature if requested
+	(sdcg_option(parsetree,true) ->	append(WithDiffList,[ParseTree],WithAll) ; WithAll = WithDiffList),
+	NewLHS =.. [ StartSymbol | WithAll ],
+	% Rewrite RHS:
+	rewrite_rule_rhs(In,Out,0,RHS,ParseTree,NewRHS),
 	StartRule =.. [ :-,  NewLHS, NewRHS ],
-	% Assert rule and definition rule:
+	% Create and assert rule and start definition definition rule:
 	assert_once(StartRule),
 	functor(NewLHS,_,Arity),
 	assert_once(sdcg_start_definition(StartSymbol/Arity)).
@@ -101,7 +118,7 @@ rewrite_rule(LHS,RHS) :-
 	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))).
 
 % Generate the selection rule, which stochastically selects which implementation rule to call
-create_selector_rule(Name,Arity,SelectorRule) :-
+create_selector_rule_with_depth_check(Name,Arity,SelectorRule) :-
 	MSW =.. [ Name, Arity ],
 	CheckAndIncDepth =.. [ incr_depth, Depth, NewDepth ],
 	Switch =.. [ msw, MSW, SwitchVar ],
@@ -114,43 +131,98 @@ create_selector_rule(Name,Arity,SelectorRule) :-
 	LHS =.. [ Name | HeadParams ],
 	SelectorRule =.. [ :-, LHS, RHS ].
 
+% Some options may lead to generation of extra features
+% For instance, if the the maxdepth option or parsetree option
+% is set then, we will need some extra features to represent this.
 
-% Generate the implementation rule with the name "NewName"	
-create_implementation_rule(Name, Features, RHS,ImplRule) :-
-	append(Features,[In,Out,Depth],Params),
-	LHS =.. [ sdcg_rule | [ Name | Params ]],
+create_selector_rule(Name,Arity,SelectorRule) :-
+	MSW =.. [ Name, Arity ],
+	Switch =.. [ msw, MSW, SwitchVar ],
+	unifiable_list(Arity,FeatureStub),
+	append(FeatureStub,[_In,_Out], HeadParams),
+	append(FeatureStub,[_In,_Out], BodyParams),
+	%generate_selector(BodyParams,SwitchVar,Values,RHS2),
+	Selector =.. [ sdcg_rule | [SwitchVar|BodyParams] ],
+	RHS = (Switch,Selector),
+	LHS =.. [ Name | HeadParams ],
+	SelectorRule =.. [ :-, LHS, RHS ].
+	
+% Generate the implementation rule, by adding difference-lists and other
+% requested features. 
+% Name(in) : The atom representing the name of the rule
+% Features(in) : A list of the of features of the rule
+% RHS(in) : A list containing the constituents of the rule
+% ImplRule(out) : The rewritten implementation rule.
+create_implementation_rule(Name, Features,RHS,ImplRule) :-
+	append(Features,[In,Out],Features1),
+	(sdcg_option(parsetree) -> 
+		(sdcg_option(parsetree_include_difflists) -> Rule =.. [Name|Features1] ; Rule =.. [Name|Features]),
+		append(Features1,[[Rule,Parsetree]],Features2)
+	;
+		Features2 = Features1
+	),
+	(sdcg_option(maxdepth,false) ->	Features3 = Features2 ; append(Features2,[Depth],Features3)),
+	LHS =.. [ sdcg_rule | [ Name | Features3 ]],
 	(RHS == [[]] ->
 		% In the case of an empty rule, the Out list should be the same as the in list.
-		ImplRuleRHS=..[=,Out,In]
+		OutIsIn =..[=,Out,In],
+		ImplRuleRHSList1 = [OutIsIn],
+		(sdcg_option(parsetree,true) ->	
+			Parsetree = [],
+			append(ImplRuleRHSList1,[Parsetree],ImplRuleRHSList2)
+		;
+		 	ImplRuleRHSList2 = ImplRuleRHSList1
+		),
+		list_to_clause(ImplRuleRHSList2,ImplRuleRHS)
 	;
 		% Otherwise, rewrite RHS constituents (add difference-lists, etc.)
-		rewrite_rule_rhs(In,Out,Depth,RHS,ImplRuleRHS)
+		rewrite_rule_rhs(In,Out,Depth,RHS,Parsetree,ImplRuleRHS)
 	),
 	ImplRule =.. [ :-, LHS, ImplRuleRHS ].
 
-rewrite_rule_rhs(In, Out,_,[],Body) :-
+% rewrite_rule_rhs goes through constituents of a rule and rewrites each of them.
+% In,Out (in) : The in and out difference list
+% Depth(in): A variable for the parse tree depth
+% RHS(in) : A list of constituents
+% Parsetree(out): Expression for generating the parse tree for this rule.
+% Body : The rewritten constituents (as a clause, not a list).
+rewrite_rule_rhs(In, Out,_,[],[],Body) :-
 	Body =.. [ =, Out, In ].
-rewrite_rule_rhs(In, Out, Depth, [R], Body) :-
+rewrite_rule_rhs(In, Out, Depth, [R], [ParseTreeFeature], Body) :-
 	((R == []) ->
 		Body =.. [ =, Out, In ]
 	;is_list(R) ->
-		generate_consumes(In,Out,R,Body) % Should we count terminals as a depth level?
+		generate_consumes(In,Out,R,Body)
 	;is_composed(R) ->
 		write('composed rules encountered'), write(R),nl
 	;is_code_block(R) ->
 		write('code block encountered'), write(R),nl,
 		R =.. [{},Body], In = Out
-	;% Otherwise normal
+	;
+		% Add difference lists:
 		R =.. L,
-		append(L,[In,Out,Depth],L1),
-		Body =.. L1
+		append(L,[In,Out],L1),
+		% Only if the parse tree feature is set, we create parsetree feature:
+		(sdcg_option(parsetree,true) ->
+			unifiable_list(1,[ParseTreeFeature]),
+			append(L1,[ParseTreeFeature],L2)
+		;
+			L2 = L1
+		),
+		% Only if the maxdepth option is set, we add the depth feature:
+		(sdcg_option(maxdepth,false) -> 
+			L3 = L2
+		;
+			append(L2,[Depth],L3)
+		),
+		% Create rule body:
+		Body =.. L3
 	).
-
-rewrite_rule_rhs(In, Out, Depth, [R | RHS], Body) :-
-	rewrite_rule_rhs(In,NextIn,Depth,[R],Clause),!,
-	rewrite_rule_rhs(NextIn,Out,Depth,RHS,ClausesRest),
+rewrite_rule_rhs(In, Out,Depth, [R | RHS], [ParseTree|ParseTreesRest], Body) :-
+	rewrite_rule_rhs(In,NextIn,Depth,[R],[ParseTree],Clause),!,
+	rewrite_rule_rhs(NextIn,Out,Depth,RHS,ParseTreesRest,ClausesRest),
 	Body = (Clause, (ClausesRest)).
-	
+
 % FIXME: I might move this to PRISM program generation instead
 generate_consumes(In,Out,[T],Clause) :-
 	Clause =.. [ consume, In, T, Out ].
@@ -159,6 +231,62 @@ generate_consumes(In,Out,[T],Clause) :-
 	generate_consumes(NextIn,Out,R,CR),
 	Clauses = (C1, (CR)).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dynamic addition of features to rules
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Simply add the feature to the argument list of the lhs expr
+add_lhs_feature(LHS,NewLHS,Feature) :-
+	LHS =.. [ Rulename | LHSArgs ],
+	append(LHSArgs,[Feature],NewLHSArgs),
+	NewLHS =.. [ Rulename, NewLHSArgs ].
+
+add_rhs_feature([],[],_,_).
+add_rhs_feature([Constituent|ConstRest],[NewConstituent|NewConstRest],Feature,Condition) :-
+	Constituent =.. [ Functor | ArgList ],
+	% If condition is something like : check/0 then check(Functor) will be called
+	(call(Condition,Functor) ->
+		append(ArgList,[Feature],NewArgList),
+		NewConstituent =.. [ Functor | NewArgList ]
+	;
+		NewConstituent = Constituent
+	),
+	add_rhs_feature(ConstRest,NewConstRest,Feature,Condition).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Depth check
+% The depth check is used to assure that the depth of the 
+% parse tree stays below a certain threshold. This is useful
+% to eliminate infinite recursion which will cause PRISM to 
+% to eat your all your memory.
+% 
+% The depth check is "tagged on" to the rules generated by the
+% compiler. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+selector_rhs_depth_feature_condition(sdcg_rule).
+
+imlp_rule_depth_feature_condition(ConstituentFunctor) :-
+	ConstituentFunctor \== {}, % Code block, skip
+	ConstituentFunctor \== [], % List, skip
+	ConstituentFunctor \== ','. % composed rule, skip
+
+add_selector_depth_check(SelectorRule,ModifiedRule) :-
+	SelectorRule =.. [ :-, LHS, RHS ],
+	CheckAndIncDepth =.. [ incr_depth, Depth, NewDepth ],
+	add_lhs_feature(LHS,NewLHS,Depth),
+	clause_to_list(RHS,RHSList),
+	add_rhs_feature(RHSList,FeatAddedRHS,NewDepth,selector_rhs_depth_feature_condition),
+	append([CheckAndIncDepth],FeatAddedRHS,FinalRHS),
+	list_to_clause(FinalRHS,NewRHS),
+	ModifiedRule =.. [ :-, NewLHS, NewRHS ].
+	
+%add_impl_depth_feature(ImplRule,DepthAddedImplRule) :-
+	
+% Add a depth feature to the implementation rule
+%add_impl_rule_depth_feature(ImplRule,ModifiedRule) :-
+%	ImplRule =.. [ :-, LHS, RHS ],
+
 % Create a rule which increments the depth parameter and checks
 % if it exceeds the maxdepth option
 create_incr_depth(Rule) :-
@@ -166,7 +294,8 @@ create_incr_depth(Rule) :-
 	sdcg_option(maxdepth,Max),
 	Body = ((integer(Depth), (NewDepth is Depth+1, (NewDepth<Max)))),
 	Rule =.. [ :-, Head, Body ].
-
+	
+	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Feature expansion
 % expands rules prefixed with @
@@ -533,7 +662,7 @@ write_incr_depth :-
 sdcg_debug(Clause) :-
 	current_output(PreviousStream),
 	set_output(user_output),
-	(sdcg_option(debug,yes) -> call(Clause)
+	(sdcg_option(debug,true) -> call(Clause)
 	; true),
 	set_output(PreviousStream).
 
