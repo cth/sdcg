@@ -56,7 +56,7 @@ test_hyphenate :-
 	hyphenate(first_second, third, first_second_third).
 
 test_replacement_name :-
-	replacement_name(funny_name, 3, 42, funny_name_3_42).
+	replacement_name(funny_name, 3, 42, [], funny_name_3_42).
 
 test_combine_two :-
 	combine_two([[a,a],[b,b],[c,c]],[[x,x],[y,y],[z,z]],
@@ -239,7 +239,7 @@ test_rewrite_rule_rhs_with_parsetree_3 :-
 	
 % should generate a simple rule containing
 test_create_selector_rule :-
-	create_selector_rule(testrule,2,SelectorRule),
+	create_selector_rule(testrule,2,[],SelectorRule),
 	SelectorRule =.. [ :-, testrule(A,B,C,D), (msw(testrule(2),E),sdcg_rule(E,A,B,C,D)) ].
 
 % This should generate an implementation rule without parse tree and depth feature
@@ -297,7 +297,7 @@ test_create_implementation_rule_with_parsetree_and_depth :-
 
 test_depth_check_transform :-
 	% First create a selector rule
-	create_selector_rule(testrule,2,SelectorRule),
+	create_selector_rule(testrule,2,[],SelectorRule),
 	add_selector_depth_check(SelectorRule,ModSelectorRule),
 	ModSelectorRule =.. [ :-,
 		testrule([A,B,C,D,E]),

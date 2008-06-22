@@ -48,13 +48,19 @@ compact_list([L1,L2|Rest], CL) :-
 compact_list([L1,L2|Rest],CL) :-
 	compact_list([L2|Rest],CL1),
 	append([L1],CL1,CL).
+	
+double_append(Lst1,Lst2,Lst3,Lst4) :-
+	append(Lst1,Lst2,TmpLst),
+	append(TmpLst,Lst3,Lst4).
 
 % assert_once always succeds
 assert_once(C) :-
 	(not(clause(C,_)) -> assert(C) ; true).
-	replacement_name(Name, Arity, Number, NewName) :-
+
+replacement_name(Name, Arity, Number, Conditions, NewName) :-
 	hyphenate(Name, Arity, N1),
-	hyphenate(N1,Number,NewName).
+	hyphenate(N1,Number,N2),
+	NewName =.. [ N2 | Conditions ].
 
 % Stitch together the first tree arguments
 % as the fourth: eg. 

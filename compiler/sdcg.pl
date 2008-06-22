@@ -20,11 +20,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 sdcg_default_option(start_symbol, sdcg).
-sdcg_default_option(maxdepth, false).
+sdcg_default_option(maxdepth, 0).
 sdcg_default_option(parsetree, false).
 sdcg_default_option(parsetree_include_difflists,false).
 sdcg_default_option(prism_file, 'generated_sdcg.psm').
 sdcg_default_option(prism_invoker, prismn). % Use prismn (with FOC/FAM as default)
+sdcg_default_option(use_foc_cheat,false).
 sdcg_default_option(debug,false).
 
 sdcg_option(Opt, Val) :-
@@ -34,7 +35,7 @@ sdcg_option(Opt) :-
 	sdcg_option(Opt,true).
 	
 sdcg_set_option(Opt,Val) :-
-	check_valid_option(Opt,Val),
+	(check_valid_option(Opt,Val) ; throw(invalid_option_value(Opt,Val))),
 	sdcg_unset_option(Opt), % Discard old value if present
 	assert(sdcg_user_option(Opt,Val)).
 
@@ -47,15 +48,18 @@ sdcg_unset_option(Opt) :-
 	
 % The first rule assures that it is an atom.
 % Some options are checked by an option specific rule checking which will throw an exception on errors. 
-% If no such rule for an option, it will be matches by the last rule, and thus succeed.
-check_valid_option(debug, V) :- 
-	(V == true) ; throw(invalid_value_for_debug(V)).
-check_valid_option(maxdepth, V) :-
-	integer(V), V > 0.
-check_valid_option(parsetree,V) :-
-	V == true ; throw(invalid_option_value(parsetree,V),reason(must_be_true)).
+% If no such rule for an option, it will be matches by the last rule, and thus succeed..
+sdcg_boolean_option(X) :-
+	sdcg_default_option(X,false).
+	
+sdcg_positive_integer_option(X) :-
+	sdcg_default_option(X,Y),
+	integer(Y).
+
 check_valid_option(Opt,Val) :-
-	atom(Val) ; throw(invalid_option_value(Opt,Val),reason(not_atom)).
+	(sdcg_boolean_option(Opt), (Val == true; Val == false));
+	(sdcg_positive_integer_option(Opt), integer(V), V > 0);
+	atom(Val).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Clause translation
@@ -106,46 +110,65 @@ rewrite_start_rule(LHS,RHS) :-
 	assert_once(sdcg_start_definition(StartSymbol/Arity)).
 
 rewrite_rule(LHS,RHS) :-
-	functor(LHS,Name,Arity),
-	LHS =.. [ Name | Features],
+	% Do we have a conditioning??
+	(functor(LHS,'|',_) ->
+		LHS =.. [ '|', Head, ConditionsClause ],
+		clause_to_list(ConditionsClause,Conditions)
+		;
+		Conditions = [],
+		Head = LHS
+	),
+	write(Head),nl,
+	Head =.. [ Name | Features],
+	functor(Head,_,Arity),
+
 	% Expand values(Rulename, ...) to include this new nonterminal and give it a unique new name:
-	expand_msw(Name, Arity, ImplRuleName),
-	create_selector_rule(Name,Arity,SelectorRule),
+	expand_msw(Name, Arity, Conditions, ImplRuleName),
+	
+	create_selector_rule(Name,Arity,Conditions,SelectorRule),
 	expand_asserted_set(sdcg_selector_rules,SelectorRule),
 	sdcg_debug((write('Selector Rule: '),nl, portray_clause(SelectorRule))),
 	create_implementation_rule(ImplRuleName,Features,RHS,ImplRule),
 	expand_asserted_set(sdcg_implementation_rules, ImplRule),
 	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))).
 
-% Generate the selection rule, which stochastically selects which implementation rule to call
-create_selector_rule_with_depth_check(Name,Arity,SelectorRule) :-
-	MSW =.. [ Name, Arity ],
-	CheckAndIncDepth =.. [ incr_depth, Depth, NewDepth ],
-	Switch =.. [ msw, MSW, SwitchVar ],
-	unifiable_list(Arity,FeatureStub),
-	append(FeatureStub,[_In,_Out,Depth], HeadParams),
-	append(FeatureStub,[_In,_Out,NewDepth], BodyParams),
-	%generate_selector(BodyParams,SwitchVar,Values,RHS2),
-	Selector =.. [ sdcg_rule | [SwitchVar|BodyParams] ],
-	RHS = (CheckAndIncDepth,(Switch,Selector)),
-	LHS =.. [ Name | HeadParams ],
-	SelectorRule =.. [ :-, LHS, RHS ].
-
 % Some options may lead to generation of extra features
 % For instance, if the the maxdepth option or parsetree option
 % is set then, we will need some extra features to represent this.
-
-create_selector_rule(Name,Arity,SelectorRule) :-
-	MSW =.. [ Name, Arity ],
-	Switch =.. [ msw, MSW, SwitchVar ],
+create_selector_rule(Name,Arity,Conditions,SelectorRule) :-
 	unifiable_list(Arity,FeatureStub),
+	((Conditions == []) -> 
+		ConditionParams = []
+	;
+		% Resolve conditioning mode
+		unifiable_list(Arity,ConditioningModeList),
+		CondModeClause =.. [ Name | ConditioningModeList ],
+		(conditioning_mode(CondModeClause) ; throw(error_condition_mode_not_defined_for(Name/Arity))),
+		resolve_conditioning_params(ConditioningModeList,FeatureStub,ConditionParams)
+	),
+	
+	MSW =.. [ Name, Arity | ConditionParams ],
+	Switch =.. [ msw, MSW, SwitchVar ],
 	append(FeatureStub,[_In,_Out], HeadParams),
 	append(FeatureStub,[_In,_Out], BodyParams),
 	%generate_selector(BodyParams,SwitchVar,Values,RHS2),
 	Selector =.. [ sdcg_rule | [SwitchVar|BodyParams] ],
 	RHS = (Switch,Selector),
 	LHS =.. [ Name | HeadParams ],
-	SelectorRule =.. [ :-, LHS, RHS ].
+	SelectorRule1 =.. [ :-, LHS, RHS ],
+	% Add a depth check if the option require it:
+	sdcg_option(maxdepth, MaxDepth),
+	((MaxDepth == false) ->
+		SelectorRule = SelectorRule1
+		;
+		add_selector_depth_check(SelectorRule1,SelectorRule)
+	).
+
+resolve_conditioning_params([],[],[]).
+resolve_conditioning_params([+|CMRest],[Param|ParamRest],[Param|CondParamRest]) :-
+	resolve_conditioning_params(CMRest,ParamRest,CondParamRest).
+resolve_conditioning_params([-|CMRest],[_|ParamRest],CondParamRest) :-
+	resolve_conditioning_params(CMRest,ParamRest,CondParamRest).
 	
 % Generate the implementation rule, by adding difference-lists and other
 % requested features. 
@@ -266,7 +289,7 @@ add_rhs_feature([Constituent|ConstRest],[NewConstituent|NewConstRest],Feature,Co
 
 selector_rhs_depth_feature_condition(sdcg_rule).
 
-imlp_rule_depth_feature_condition(ConstituentFunctor) :-
+impl_rule_depth_feature_condition(ConstituentFunctor) :-
 	ConstituentFunctor \== {}, % Code block, skip
 	ConstituentFunctor \== [], % List, skip
 	ConstituentFunctor \== ','. % composed rule, skip
@@ -295,7 +318,6 @@ create_incr_depth(Rule) :-
 	Body = ((integer(Depth), (NewDepth is Depth+1, (NewDepth<Max)))),
 	Rule =.. [ :-, Head, Body ].
 	
-	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Feature expansion
 % expands rules prefixed with @
@@ -316,21 +338,34 @@ expand_expanders(LHS,RHS,Rules) :-
 % of grammar rules based on the expansions in the original rule
 create_expansion_rule(LHS,RHS,ExpRule) :-
 	% Extract LHS expanders:
-	lhs_expansion(LHS,LHSExpandersE,LHSVarsE),
-	flatten_once(LHSVarsE,LHSVars),
-	remove_empty(LHSExpandersE,LHSExpanders),
+	(functor(LHS,'|',2) -> % Do we have conditions? They might need expansion too.
+		LHS =.. [ '|', Head, Conditions],
+		condition_expansion(Conditions,CondExpanders,CondVars)
+		;
+		CondExpanders = [],
+		CondVars = [],
+		Head = LHS
+	),
+	lhs_expansion(Head,LHSExpanders,LHSVars),
 	% Extract RHS expanders:
 	clause_to_list(RHS,RHSList),
-	rhs_expansion(RHSList,RHSExpandersE,RHSVarsE),
-	flatten_once(RHSVarsE,RHSVars),
-	remove_empty(RHSExpandersE,RHSExpanders),
+	rhs_expansion(RHSList,RHSExpanders,RHSVars),
 	% Join expanders:
-	append(LHSExpanders,RHSExpanders,Expanders),
+	double_append(LHSExpanders,RHSExpanders,CondExpanders,Expanders),
+	%append(LHSExpanders,RHSExpanders,Expanders1),
+	%append(Expanders1,CondExpanders,Expanders),
 	
 	% Create LHS rule creator:
-	functor(LHS,FuncLHS,_),
-	append([FuncLHS],LHSVars,NewLHS),
-	LHSAssignRule =.. [ =.. , R_LHS, NewLHS ],
+	functor(Head,FuncLHS,_),
+	append([FuncLHS],LHSVars,NewLHSNoCond),
+	(functor(LHS,'|',2) -> % Do we have conditions?
+		list_to_clause(CondVars,CondVarsClause),
+		NewLHSNoCondClause =.. NewLHSNoCond,
+		NewLHS = [ '|', NewLHSNoCondClause, CondVarsClause ]
+		; % no
+		NewLHS = NewLHSNoCond
+	),
+	LHSAssignRule =.. [ =.. , R_LHS, (NewLHS) ],
 	% Create RHS rule creator:
 	list_to_clause(RHSVars,RHSClauses),
 	RHSAssignRule =.. [ =, R_RHS, RHSClauses ],
@@ -342,21 +377,46 @@ create_expansion_rule(LHS,RHS,ExpRule) :-
 	list_to_clause(ExpRuleBodyList,ExpRuleBody),
 	ExpRuleHead =.. [ expander, R ],
 	ExpRule =.. [ :-, ExpRuleHead, ExpRuleBody ], !.
+	
+	
+condition_expansion(Conditions,Expanders,Vars) :-
+	clause_to_list(Conditions,ConditionList),
+	expand_feature_list(ConditionList,Expanders,Vars).
 
 % Expands the LHS of a grammar rule into a set of expansion clauses and unification variables
 lhs_expansion(LHS,Expanders,Vars) :-
 	LHS =.. [ _ | Features ],
 	expand_feature_list(Features,Expanders,Vars).
+	/*
+	lhs_expansion(LHS,Expanders,Vars) :-
+		(functor(LHS, '|',2) ->
+			LHS =.. [ '|', Head, ConditionClause ],
+			Head =.. [ _, HeadFeatures ],
+			clause_to_list(ConditionClause,ConditionList),
+			expand_feature_list(HeadFeatures,HeadExpanders,HeadVars),
+			expand_feature_list(ConditionList,ConditionExpanders,ConditionVars),
+			append(HeadExpanders,ConditionExpanders,Expanders),
+			append(HeadVars,ConditionVars,Vars)
+			;
+			LHS =.. [ _ | Features ],
+			expand_feature_list(Features,Expanders,Vars)
+		).
+		*/
 
 % Expands the RHS of a grammar rule into a set of expansion clauses and unification variables
 rhs_expansion(RHS,Expanders,Vars) :-
 	expand_feature_list(RHS,Expanders,Vars).
 	
 % Expand all constituents which have a @prefix into a prolog clauses and unification variables
-expand_feature_list([],[],[]).
-expand_feature_list([Feature|R],[Expander|ER],[FVars|VR]) :-
+% Call expand_feature_list1, which does the actual work and then cleanup junk (empty entries, spurious lists).
+expand_feature_list(Features,Expanders,Vars) :-
+	expand_feature_list1(Features,Expanders1,Vars1),
+	flatten_once(Vars1,Vars),
+	remove_empty(Expanders1,Expanders).
+expand_feature_list1([],[],[]).
+expand_feature_list1([Feature|R],[Expander|ER],[FVars|VR]) :-
 	expand_feature(Feature,Expander,FVars),
-	expand_feature_list(R,ER,VR).
+	expand_feature_list1(R,ER,VR).
 	
 % If given an expansion feature e.g. @blah(ground,Y,Z), the variable "Expander" will
 % be set to "blah(ground,Y,Z)" and NewFeatures will be a list [Y,Z] containing the
@@ -517,7 +577,7 @@ read_rules(Stream, Rules) :-
 compile_rules([]).
 compile_rules([X|R]) :-
 	functor(X,F,A),
-	(member([F,A], [[==>,2],[@=>,2],[sdcg_set_option,2]]) ->
+	(member([F,A], [[==>,2],[@=>,2],[sdcg_set_option,_]]) ->
 		call(X)
 	;
 		assert(X)
@@ -575,8 +635,8 @@ write_prism_program(Stream) :-
 	retractall(sdcg_implementation_rules(_)),
 	section('Utilities:'),
 	write_consume,
-	write_mysterious_all,
-	write_incr_depth,
+	(sdcg_option(use_foc_cheat) -> write_mysterious_all ; true),
+	(not sdcg_option(maxdepth,false) -> write_incr_depth ; true),
 	section('User defined'),
 	listing,
 	set_output(PreviousStream).
@@ -608,7 +668,7 @@ write_sdcg_start_rule :-
 	Head =.. [ StartSymbol | L],
 	retractall(Head),
 	retractall(sdcg_start_definition(_)).
-	
+
 write_rules([]).
 write_rules([Rule|Rest]) :-
 	portray_clause(Rule),
@@ -665,12 +725,15 @@ sdcg_debug(Clause) :-
 	(sdcg_option(debug,true) -> call(Clause)
 	; true),
 	set_output(PreviousStream).
-
-expand_msw(Name, Arity, NewName) :-
-	MSW =.. [Name, Arity],
+	
+expand_msw(Name,Arity,NewName) :-
+	expand_msw(Name,Arity,[],NewName).
+	
+expand_msw(Name, Arity, Conditions,NewName) :-
+	MSW =.. [Name,Arity|Conditions],
 	% If the MSW is not defined yet we might get an error
 	catch((values(MSW,Values);true), _,true),
-		(ground(Values) -> 
+		(ground(Values) ->
 		% then extract largest id from the values
 		Values = [ First | _ ], % New elements are always inserted in the beginning of the list
 		peel_rightmost(First, _, Peeled),
@@ -678,7 +741,7 @@ expand_msw(Name, Arity, NewName) :-
 		NextId is LastId + 1
 		% Else: Just start with a new id
 		; NextId = 1),
-	replacement_name(Name, Arity, NextId, NewName),
+	replacement_name(Name, Arity, NextId, Conditions, NewName),
 	update_msw(MSW, NewName).
 
 update_msw(Name, Value) :-
@@ -703,7 +766,10 @@ expand_asserted_set(Name, NewValue) :-
 		NewClause =.. [ Name, NewValues ]
 	),
 	assert(NewClause).
-	
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Verification of the correctness of the generated program
 verify :-
 	prob(failure,F),
 	prob(success,S),
