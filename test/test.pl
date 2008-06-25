@@ -190,7 +190,7 @@ test_expand_feature :-
 test_default_options :-
 	sdcg_option(start_symbol, sdcg),
 	sdcg_option(parsetree,false),
-	sdcg_option(maxdepth,false),
+	sdcg_option(maxdepth,0),
 	sdcg_option(prism_file, 'generated_sdcg.psm'),
 	sdcg_option(prism_invoker, prismn),
 	sdcg_option(debug,false).

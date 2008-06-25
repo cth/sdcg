@@ -13,13 +13,11 @@
 :- dynamic sdcg_user_option/2.
 :- dynamic sdcg_start_definition/2.
 
-:- catch(require('util/util.pl'), _, cl('../util/util.pl')).
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SDCG Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-sdcg_default_option(start_symbol, sdcg).
+sdcg_default_option(start_symbol, start).
 sdcg_default_option(maxdepth, 0).
 sdcg_default_option(parsetree, false).
 sdcg_default_option(parsetree_include_difflists,false).
@@ -29,26 +27,27 @@ sdcg_default_option(use_foc_cheat,false).
 sdcg_default_option(debug,false).
 
 sdcg_option(Opt, Val) :-
-	(clause(sdcg_user_option(Opt,_),_) -> sdcg_user_option(Opt,Val) ; sdcg_default_option(Opt,Val)).
+	(clause(sdcg_user_option(Opt,_),_) ->
+		sdcg_user_option(Opt,Val)
+		;
+	 	sdcg_default_option(Opt,Val)
+	).
 
+% These two shortcuts may be used for boolean options
 sdcg_option(Opt) :-
 	sdcg_option(Opt,true).
+sdcg_set_option(Opt) :-
+	sdcg_set_option(Opt,true).
 	
 sdcg_set_option(Opt,Val) :-
-	(check_valid_option(Opt,Val) ; throw(invalid_option_value(Opt,Val))),
+	check_valid_option(Opt,Val),
 	sdcg_unset_option(Opt), % Discard old value if present
 	assert(sdcg_user_option(Opt,Val)).
 
-% If the only thing an option can be set to is true, why use two args?
-sdcg_set_option(Opt) :-
-	sdcg_set_option(Opt,true).
-
+% Unset a previously set option. Never unsets the default value.
 sdcg_unset_option(Opt) :-
 	retractall(sdcg_user_option(Opt,_)).
 	
-% The first rule assures that it is an atom.
-% Some options are checked by an option specific rule checking which will throw an exception on errors. 
-% If no such rule for an option, it will be matches by the last rule, and thus succeed..
 sdcg_boolean_option(X) :-
 	sdcg_default_option(X,false).
 	
@@ -57,9 +56,25 @@ sdcg_positive_integer_option(X) :-
 	integer(Y).
 
 check_valid_option(Opt,Val) :-
-	(sdcg_boolean_option(Opt), (Val == true; Val == false));
-	(sdcg_positive_integer_option(Opt), integer(V), V > 0);
-	atom(Val).
+	(check_option_name(Opt) ->
+		(check_option_value(Opt,Val) ; throw(invalid_option_value(Opt,Val)))
+		;
+		throw(invalid_option(Opt))
+	).
+
+check_option_name(Opt) :-
+	ground(Opt),
+	sdcg_default_option(Opt,_). % There must a default option with this name
+
+check_option_value(Opt,Val) :-
+	ground(Val),
+	(
+		(sdcg_boolean_option(Opt), member(Val,[true,false]))
+		;
+		(sdcg_positive_integer_option(Opt), integer(V), V > 0)
+		;
+		atom(Val)
+	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Clause translation
@@ -69,6 +84,7 @@ check_valid_option(Opt,Val) :-
 
 % FIXME: ==> is probably a bad syntax choice (e.g. CHR)
 ==>(LHS,RHS) :-
+	sdcg_debug((write('Processing rule '), write(LHS), write(' ==> '), write(RHS), nl)),
 	expand_expanders(LHS,RHS,DerivedRules),
 	process_expanded_rules(DerivedRules).
 
@@ -79,7 +95,7 @@ process_expanded_rules([Rule|Rest]) :-
 
 % @=> rules are considered expanded. Any special instructions are treated as normal constituents
 @=>(LHS,RHS) :-
-	sdcg_debug((write('%%%%%%%%%%%%%  processing rule '), write(LHS), write(' ==> '), write(RHS), write(' %%%%%%%%%%%%%%'), nl)),
+	sdcg_debug((write('Processing rule '), write(LHS), write(' @=> '), write(RHS), nl)),
 	clause_to_list(RHS,RHSL),
 	regex_expansions(RHSL,NewRHSL,ExpandedRules),
 	sdcg_option(start_symbol,StartSymbol),
@@ -158,7 +174,7 @@ create_selector_rule(Name,Arity,Conditions,SelectorRule) :-
 	SelectorRule1 =.. [ :-, LHS, RHS ],
 	% Add a depth check if the option require it:
 	sdcg_option(maxdepth, MaxDepth),
-	((MaxDepth == false) ->
+	((MaxDepth == 0) ->
 		SelectorRule = SelectorRule1
 		;
 		add_selector_depth_check(SelectorRule1,SelectorRule)
@@ -184,7 +200,7 @@ create_implementation_rule(Name, Features,RHS,ImplRule) :-
 	;
 		Features2 = Features1
 	),
-	(sdcg_option(maxdepth,false) ->	Features3 = Features2 ; append(Features2,[Depth],Features3)),
+	(sdcg_option(maxdepth,0) ->	Features3 = Features2 ; append(Features2,[Depth],Features3)),
 	LHS =.. [ sdcg_rule | [ Name | Features3 ]],
 	(RHS == [[]] ->
 		% In the case of an empty rule, the Out list should be the same as the in list.
@@ -233,7 +249,7 @@ rewrite_rule_rhs(In, Out, Depth, [R], [ParseTreeFeature], Body) :-
 			L2 = L1
 		),
 		% Only if the maxdepth option is set, we add the depth feature:
-		(sdcg_option(maxdepth,false) -> 
+		(sdcg_option(maxdepth,0) -> 
 			L3 = L2
 		;
 			append(L2,[Depth],L3)
@@ -540,16 +556,18 @@ regex_rule_kleene(_,NewConstituent,Rule) :-
 
 % Load, parse and compile the grammar given in File
 sdcg(File) :-
+	atom(File),
 	sdcg_parse(File),
 	section('Load and compile stage'),
 	%sdcg_debug(listing),
 	sdcg_compile.
 	
-% Parse a list of files
-%sdcg_parse([]).
-%sdcg_parse([File|FilesRest]) :-
-%	sdcg_parse(File),
-%	sdcg_parser(FilesRest).
+% Load a list of files
+sdcg([]) :-
+	sdcg_compile.
+sdcg([File|FilesRest]) :-
+	sdcg_parse(File),
+	sdcg(FilesRest).
 
 sdcg_parse(File) :-
 	sdcg_debug((write('Loading SDCG in '), write(File), nl)),
@@ -636,7 +654,7 @@ write_prism_program(Stream) :-
 	section('Utilities:'),
 	write_consume,
 	(sdcg_option(use_foc_cheat) -> write_mysterious_all ; true),
-	(not sdcg_option(maxdepth,false) -> write_incr_depth ; true),
+	(not sdcg_option(maxdepth,0) -> write_incr_depth ; true),
 	section('User defined'),
 	listing,
 	set_output(PreviousStream).
