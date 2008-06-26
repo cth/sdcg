@@ -49,7 +49,7 @@ sdcg_unset_option(Opt) :-
 	retractall(sdcg_user_option(Opt,_)).
 	
 sdcg_boolean_option(X) :-
-	sdcg_default_option(X,false).
+	sdcg_default_option(X,false) ; sdcg_default_option(X,true).
 	
 sdcg_positive_integer_option(X) :-
 	sdcg_default_option(X,Y),
@@ -71,7 +71,7 @@ check_option_value(Opt,Val) :-
 	(
 		(sdcg_boolean_option(Opt), member(Val,[true,false]))
 		;
-		(sdcg_positive_integer_option(Opt), integer(V), V > 0)
+		(sdcg_positive_integer_option(Opt), integer(Val), Val > 0)
 		;
 		atom(Val)
 	).
@@ -106,6 +106,12 @@ process_expanded_rules([Rule|Rest]) :-
 	),
 	process_expanded_rules(ExpandedRules).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The start rule is special because
+% - it is unique: Ensuring that the grammar is a tree
+% - it is not probabilistic:
+%     - probabilistic choices are deferree to children
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 rewrite_start_rule(LHS,RHS) :-
 	% The symbol "StartSymbol" is the root of the tree and must be unique, so throw
 	% an exception if this is not the case.
@@ -115,10 +121,20 @@ rewrite_start_rule(LHS,RHS) :-
 	LHS =.. [ StartSymbol | Features ],
 	append(Features,[In,Out], WithDiffList),
 	% Add parse tree feature if requested
-	(sdcg_option(parsetree,true) ->	append(WithDiffList,[ParseTree],WithAll) ; WithAll = WithDiffList),
+	(sdcg_option(parsetree) ->
+		(sdcg_option(parsetree_include_difflist) ->
+			ParseTreeLHS =.. [ StartSymbol | WithDiffList ],
+			ParseTree = [ ParseTreeLHS, ParseTreeChildren ]
+		;
+			ParseTree = [ LHS, ParseTreeChildren ]
+		),
+		append(WithDiffList,[ParseTree],WithAll)
+	; 
+		WithAll = WithDiffList
+	),
 	NewLHS =.. [ StartSymbol | WithAll ],
 	% Rewrite RHS:
-	rewrite_rule_rhs(In,Out,0,RHS,ParseTree,NewRHS),
+	rewrite_rule_rhs(In,Out,0,RHS,ParseTreeChildren,NewRHS),
 	StartRule =.. [ :-,  NewLHS, NewRHS ],
 	% Create and assert rule and start definition definition rule:
 	assert_once(StartRule),
@@ -144,7 +160,7 @@ rewrite_rule(LHS,RHS) :-
 	create_selector_rule(Name,Arity,Conditions,SelectorRule),
 	expand_asserted_set(sdcg_selector_rules,SelectorRule),
 	sdcg_debug((write('Selector Rule: '),nl, portray_clause(SelectorRule))),
-	create_implementation_rule(ImplRuleName,Features,RHS,ImplRule),
+	create_implementation_rule(ImplRuleName,Name,Features,RHS,ImplRule),
 	expand_asserted_set(sdcg_implementation_rules, ImplRule),
 	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))).
 
@@ -172,12 +188,18 @@ create_selector_rule(Name,Arity,Conditions,SelectorRule) :-
 	RHS = (Switch,Selector),
 	LHS =.. [ Name | HeadParams ],
 	SelectorRule1 =.. [ :-, LHS, RHS ],
+	% Add parse tree feature if required:
+	(sdcg_option(parsetree) ->
+		add_selector_parsetree(SelectorRule1,SelectorRule2)
+		;
+		SelectorRule2 = SelectorRule1
+	),
 	% Add a depth check if the option require it:
 	sdcg_option(maxdepth, MaxDepth),
 	((MaxDepth == 0) ->
-		SelectorRule = SelectorRule1
+		SelectorRule = SelectorRule2
 		;
-		add_selector_depth_check(SelectorRule1,SelectorRule)
+		add_selector_depth_check(SelectorRule2,SelectorRule)
 	).
 
 resolve_conditioning_params([],[],[]).
@@ -185,17 +207,17 @@ resolve_conditioning_params([+|CMRest],[Param|ParamRest],[Param|CondParamRest]) 
 	resolve_conditioning_params(CMRest,ParamRest,CondParamRest).
 resolve_conditioning_params([-|CMRest],[_|ParamRest],CondParamRest) :-
 	resolve_conditioning_params(CMRest,ParamRest,CondParamRest).
-	
+
 % Generate the implementation rule, by adding difference-lists and other
 % requested features. 
 % Name(in) : The atom representing the name of the rule
 % Features(in) : A list of the of features of the rule
 % RHS(in) : A list containing the constituents of the rule
 % ImplRule(out) : The rewritten implementation rule.
-create_implementation_rule(Name, Features,RHS,ImplRule) :-
+create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule) :-
 	append(Features,[In,Out],Features1),
-	(sdcg_option(parsetree) -> 
-		(sdcg_option(parsetree_include_difflists) -> Rule =.. [Name|Features1] ; Rule =.. [Name|Features]),
+	(sdcg_option(parsetree) ->
+		(sdcg_option(parsetree_include_difflists) -> Rule =.. [SelectorName|Features1] ; Rule =.. [SelectorName|Features]),
 		append(Features1,[[Rule,Parsetree]],Features2)
 	;
 		Features2 = Features1
@@ -206,7 +228,7 @@ create_implementation_rule(Name, Features,RHS,ImplRule) :-
 		% In the case of an empty rule, the Out list should be the same as the in list.
 		OutIsIn =..[=,Out,In],
 		ImplRuleRHSList1 = [OutIsIn],
-		(sdcg_option(parsetree,true) ->	
+		(sdcg_option(parsetree,true) ->
 			Parsetree = [],
 			append(ImplRuleRHSList1,[Parsetree],ImplRuleRHSList2)
 		;
@@ -227,11 +249,12 @@ create_implementation_rule(Name, Features,RHS,ImplRule) :-
 % Body : The rewritten constituents (as a clause, not a list).
 rewrite_rule_rhs(In, Out,_,[],[],Body) :-
 	Body =.. [ =, Out, In ].
-rewrite_rule_rhs(In, Out, Depth, [R], [ParseTreeFeature], Body) :-
+rewrite_rule_rhs(In, Out, Depth, [R], ParseTreeFeature, Body) :-
 	((R == []) ->
 		Body =.. [ =, Out, In ]
 	;is_list(R) ->
-		generate_consumes(In,Out,R,Body)
+		generate_consumes(In,Out,R,Body),
+		ParseTreeFeature = []
 	;is_composed(R) ->
 		write('composed rules encountered'), write(R),nl
 	;is_code_block(R) ->
@@ -243,8 +266,9 @@ rewrite_rule_rhs(In, Out, Depth, [R], [ParseTreeFeature], Body) :-
 		append(L,[In,Out],L1),
 		% Only if the parse tree feature is set, we create parsetree feature:
 		(sdcg_option(parsetree,true) ->
-			unifiable_list(1,[ParseTreeFeature]),
-			append(L1,[ParseTreeFeature],L2)
+			unifiable_list(1,[PF]),
+			append(L1,[PF],L2),
+			ParseTreeFeature = [PF]
 		;
 			L2 = L1
 		),
@@ -278,7 +302,9 @@ generate_consumes(In,Out,[T],Clause) :-
 add_lhs_feature(LHS,NewLHS,Feature) :-
 	LHS =.. [ Rulename | LHSArgs ],
 	append(LHSArgs,[Feature],NewLHSArgs),
-	NewLHS =.. [ Rulename, NewLHSArgs ].
+%	list_to_clause(NewLHSArgsList,NewLHSA),
+%	write('add LHS feature'), write(NEWLHSArgs),nl,
+	NewLHS =.. [ Rulename | NewLHSArgs ].
 
 add_rhs_feature([],[],_,_).
 add_rhs_feature([Constituent|ConstRest],[NewConstituent|NewConstRest],Feature,Condition) :-
@@ -304,12 +330,14 @@ add_rhs_feature([Constituent|ConstRest],[NewConstituent|NewConstRest],Feature,Co
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 selector_rhs_depth_feature_condition(sdcg_rule).
+selector_parsetree_condition(sdcg_rule).
 
 impl_rule_depth_feature_condition(ConstituentFunctor) :-
 	ConstituentFunctor \== {}, % Code block, skip
 	ConstituentFunctor \== [], % List, skip
 	ConstituentFunctor \== ','. % composed rule, skip
 
+% FIXME: The next two rules should be generalized
 add_selector_depth_check(SelectorRule,ModifiedRule) :-
 	SelectorRule =.. [ :-, LHS, RHS ],
 	CheckAndIncDepth =.. [ incr_depth, Depth, NewDepth ],
@@ -318,6 +346,14 @@ add_selector_depth_check(SelectorRule,ModifiedRule) :-
 	add_rhs_feature(RHSList,FeatAddedRHS,NewDepth,selector_rhs_depth_feature_condition),
 	append([CheckAndIncDepth],FeatAddedRHS,FinalRHS),
 	list_to_clause(FinalRHS,NewRHS),
+	ModifiedRule =.. [ :-, NewLHS, NewRHS ].
+
+add_selector_parsetree(SelectorRule,ModifiedRule) :-
+	SelectorRule =.. [ :-, LHS, RHS ],
+	add_lhs_feature(LHS,NewLHS,ParseTree),
+	clause_to_list(RHS,RHSList),
+	add_rhs_feature(RHSList,FeatAddedRHS,ParseTree,selector_parsetree_condition),
+	list_to_clause(FeatAddedRHS,NewRHS),
 	ModifiedRule =.. [ :-, NewLHS, NewRHS ].
 	
 %add_impl_depth_feature(ImplRule,DepthAddedImplRule) :-
@@ -569,6 +605,7 @@ sdcg([File|FilesRest]) :-
 	sdcg_parse(File),
 	sdcg(FilesRest).
 
+% Open a grammar file, read all in all rules, compile rules
 sdcg_parse(File) :-
 	sdcg_debug((write('Loading SDCG in '), write(File), nl)),
 	open(File, read, Stream),
@@ -618,7 +655,9 @@ sdcg_compile :-
 	%sdcg_debug(fo_trace),
 	sdcg_option(prism_invoker,PI),
 	InvokePRISM =.. [ PI, OutFile ],
-	call(InvokePRISM).
+	call(InvokePRISM),
+	write('program successfully loaded :-)'), nl,
+	verify.
 
 write_prism_program :-
 	write_prism_program(user_output).
@@ -671,9 +710,17 @@ write_prism_directives :-
 	Failure =.. [ :-, failure, NotSuccess ],
 	portray_clause(Failure),
 	ExceptOutArity is Arity - 1,
-	unifiable_list(ExceptOutArity, L1),
+	(sdcg_option(parsetree) ->
+		ExceptParseTreeArity is ExceptOutArity - 1,
+		PTF = [_ParseTreeFeature]
+		;
+		ExceptParseTreeArity = ExceptOutArity,
+		PTF = []
+	),
+	unifiable_list(ExceptParseTreeArity, L1),
 	append(L1,[[]],L2),
-	StartCall =.. [ Name | L2 ],
+	append(L2,PTF,L3),
+	StartCall =.. [ Name | L3 ],
 	Success =.. [ :-, success, StartCall ],
 	portray_clause(Success),
 	writeq(data(user)),dot, nl.
@@ -801,17 +848,3 @@ verify :-
 	write('In total (should be 1): '),
 	write(Total),
 	nl.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Test stuff
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-try_it :-
-	(sdcg(X) ==> np(X)),
-	(np(X) ==> det(X), noun(X)),
-	(np(X) ==> noun(X)),
-	(noun(sg) ==> [dog]),
-	(noun(pl) ==> [dogs]),
-	(det(pl) ==> [the]),
-	(det(sg) ==> [the]),
-	sdcg_compile.
