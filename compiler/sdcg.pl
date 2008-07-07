@@ -84,7 +84,7 @@ check_option_value(Opt,Val) :-
 
 % FIXME: ==> is probably a bad syntax choice (e.g. CHR)
 ==>(LHS,RHS) :-
-	sdcg_debug((write('Processing rule '), write(LHS), write(' ==> '), write(RHS), nl)),
+	sdcg_debug((write('Expanding macros in rule '), write(LHS), write(' ==> '), write(RHS), nl)),
 	expand_expanders(LHS,RHS,DerivedRules),
 	process_expanded_rules(DerivedRules).
 
@@ -95,7 +95,7 @@ process_expanded_rules([Rule|Rest]) :-
 
 % @=> rules are considered expanded. Any special instructions are treated as normal constituents
 @=>(LHS,RHS) :-
-	sdcg_debug((write('Processing rule '), write(LHS), write(' @=> '), write(RHS), nl)),
+	sdcg_debug((nl,write('Processing rule '), write(LHS), write(' @=> '), write(RHS), nl)),
 	clause_to_list(RHS,RHSL),
 	regex_expansions(RHSL,NewRHSL,ExpandedRules),
 	sdcg_option(start_symbol,StartSymbol),
@@ -110,7 +110,7 @@ process_expanded_rules([Rule|Rest]) :-
 % The start rule is special because
 % - it is unique: Ensuring that the grammar is a tree
 % - it is not probabilistic:
-%     - probabilistic choices are deferree to children
+%     - probabilistic choices are deferred to children
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 rewrite_start_rule(LHS,RHS) :-
 	% The symbol "StartSymbol" is the root of the tree and must be unique, so throw
@@ -141,25 +141,37 @@ rewrite_start_rule(LHS,RHS) :-
 	functor(NewLHS,_,Arity),
 	assert_once(sdcg_start_definition(StartSymbol/Arity)).
 
-rewrite_rule(LHS,RHS) :-
-	% Do we have a conditioning??
-	(functor(LHS,'|',_) ->
-		LHS =.. [ '|', Head, ConditionsClause ],
-		clause_to_list(ConditionsClause,Conditions)
-		;
-		Conditions = [],
-		Head = LHS
-	),
-	write(Head),nl,
+% Rewrite rules with conditioning patterns
+rewrite_rule(LHS,RHSL) :-
+	functor(LHS,'|',_), % Guard: only rules with conditioning patterns are rewritten using this rule
+	LHS =.. [ '|', Head, ConditionsClause ],
+	clause_to_list(ConditionsClause,Conditions),
 	Head =.. [ Name | Features],
 	functor(Head,_,Arity),
+	create_condition_rule(Name,Arity,Conditions,ConditionRule,ConsequentName),
+	((ConditionRule = []) ->
+		sdcg_debug((nl,write('Conditioning rule allready exist'),nl))
+	 	;
+		sdcg_debug((nl,write('Created conditioning rule:'), nl, portray_clause(ConditionRule),nl)),
+		expand_asserted_set(sdcg_condition_rules,ConditionRule)
+	),
+	ConsequentHead =.. [ ConsequentName | Features ],
+	list_to_clause(RHSL,RHS),
+	ConsequentRule =.. [ '@=>', ConsequentHead, RHS ],
+	sdcg_debug((write('Calling consequent rule:'),portray_clause(ConsequentRule),nl)),
+	call(ConsequentRule).
 
+% Rewrite rules without conditioning patterns
+rewrite_rule(LHS,RHS) :-
+	LHS =.. [ Name | Features],
+	functor(LHS,_,Arity),
 	% Expand values(Rulename, ...) to include this new nonterminal and give it a unique new name:
-	expand_msw(Name, Arity, Conditions, ImplRuleName),
-	
-	create_selector_rule(Name,Arity,Conditions,SelectorRule),
+	expand_msw(Name, Arity, ImplRuleName),
+	% Create selector rule
+	create_selector_rule(Name,Arity,SelectorRule),
 	expand_asserted_set(sdcg_selector_rules,SelectorRule),
 	sdcg_debug((write('Selector Rule: '),nl, portray_clause(SelectorRule))),
+	% Create Implementation rule
 	create_implementation_rule(ImplRuleName,Name,Features,RHS,ImplRule),
 	expand_asserted_set(sdcg_implementation_rules, ImplRule),
 	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))).
@@ -167,19 +179,9 @@ rewrite_rule(LHS,RHS) :-
 % Some options may lead to generation of extra features
 % For instance, if the the maxdepth option or parsetree option
 % is set then, we will need some extra features to represent this.
-create_selector_rule(Name,Arity,Conditions,SelectorRule) :-
+create_selector_rule(Name,Arity,SelectorRule) :-
 	unifiable_list(Arity,FeatureStub),
-	((Conditions == []) -> 
-		ConditionParams = []
-	;
-		% Resolve conditioning mode
-		unifiable_list(Arity,ConditioningModeList),
-		CondModeClause =.. [ Name | ConditioningModeList ],
-		(conditioning_mode(CondModeClause) ; throw(error_condition_mode_not_defined_for(Name/Arity))),
-		resolve_conditioning_params(ConditioningModeList,FeatureStub,ConditionParams)
-	),
-	
-	MSW =.. [ Name, Arity | ConditionParams ],
+	MSW =.. [ Name, Arity ],
 	Switch =.. [ msw, MSW, SwitchVar ],
 	append(FeatureStub,[_In,_Out], HeadParams),
 	append(FeatureStub,[_In,_Out], BodyParams),
@@ -202,6 +204,69 @@ create_selector_rule(Name,Arity,Conditions,SelectorRule) :-
 		add_selector_depth_check(SelectorRule2,SelectorRule)
 	).
 
+create_condition_rule(Name,Arity,Conditions,ConditionRule,ConditionedSelectorName) :-
+	% Create an unique identifier for selector rule for these conditions by expanding
+	% the set to contain current conditions and counting how many combinations there are.
+	hyphenate(Name,Arity,ConditionListIdentifier),
+	PreCheckSetExpand =.. [ ConditionListIdentifier | [AllConditionsPre] ],
+	sdcg_debug((nl,write('PreCheckSetExpand: '), write(PreCheckSetExpand),nl)),
+	catch(call(PreCheckSetExpand),_,AllConditionsPre=[]),
+	% Is the condition rule allready created?
+	sdcg_debug(
+		(write('ConditionListIdentifier: '),write(ConditionListIdentifier),nl,
+		write('AllConditionPre: '),write(AllConditionsPre),nl)
+	),
+	(member(Conditions,AllConditionsPre) ->
+		ConditionRule = [],
+		nth(Index,AllConditionsPre,Conditions),
+		replacement_name(Name,Arity,Index,ConditionedSelectorName)
+		;
+		expand_asserted_set(condition_lists,ConditionListIdentifier),
+		expand_asserted_set(ConditionListIdentifier, Conditions),
+		PostSetExpander =.. [ ConditionListIdentifier | [AllConditions] ],
+		call(PostSetExpander),
+		length(AllConditions,NextId),
+		% Create a feature-list where the corresponding conditions are ground and any 
+		% other feature is nonground.
+		unifiable_list(Arity,ConditioningModeList),
+		CondModeClause =.. [ Name | ConditioningModeList ],
+		sdcg_debug((write('CondModeClause: '),write(CondModeClause),nl)),
+		(conditioning_mode(CondModeClause) ->
+			true
+			;
+			nl,
+			write('ERROR: Cannot find a conditioning mode for '),
+			write(Name/Arity), nl,
+			abort
+		),
+		sdcg_debug(
+			(write(CondModeClause),nl,
+			write('mode: '), write(ConditioningModeList),nl,
+			write('conditions: '), write(Conditions),nl)
+		),
+		resolve_conditioning_params(ConditioningModeList,FeatList1,Conditions),
+		sdcg_debug((write('resulting feature list: '), write(FeatList1),nl)),
+		%% Add difference lists and optional features
+		append(FeatList1,[_in,_out],FeatList2),
+		(sdcg_option(parsetree) ->
+			append(FeatList2,[_parsetree], FeatList3)
+			;
+			FeatList3 = FeatList2
+		),
+		(sdcg_option(maxdepth,0) ->
+			FeatList4 = FeatList3
+			;
+			append(FeatList3,[_depth],FeatList4)			
+		),
+		% Create the rule
+		replacement_name(Name,Arity,NextId,ConditionedSelectorName),
+		sdcg_debug((write(ConditionedSelectorName),nl)),
+		LHS =.. [ Name | FeatList4 ],
+		RHS =.. [ ConditionedSelectorName | FeatList4 ],
+		ConditionRule =.. [ :-, LHS, RHS ],
+		sdcg_debug((write('condition rule: '),write(ConditionRule),nl))
+	).
+
 resolve_conditioning_params([],[],[]).
 resolve_conditioning_params([+|CMRest],[Param|ParamRest],[Param|CondParamRest]) :-
 	resolve_conditioning_params(CMRest,ParamRest,CondParamRest).
@@ -217,7 +282,11 @@ resolve_conditioning_params([-|CMRest],[_|ParamRest],CondParamRest) :-
 create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule) :-
 	append(Features,[In,Out],Features1),
 	(sdcg_option(parsetree) ->
-		(sdcg_option(parsetree_include_difflists) -> Rule =.. [SelectorName|Features1] ; Rule =.. [SelectorName|Features]),
+		(sdcg_option(parsetree_include_difflists) -> 
+			Rule =.. [SelectorName|Features1]
+			; 
+			Rule =.. [SelectorName|Features]
+		),
 		append(Features1,[[Rule,Parsetree]],Features2)
 	;
 		Features2 = Features1
@@ -256,7 +325,7 @@ rewrite_rule_rhs(In, Out, Depth, [R], ParseTreeFeature, Body) :-
 		generate_consumes(In,Out,R,Body),
 		ParseTreeFeature = []
 	;is_composed(R) ->
-		write('composed rules encountered'), write(R),nl
+		write('composed rules encountered: '), write(R),nl
 	;is_code_block(R) ->
 		write('code block encountered'), write(R),nl,
 		R =.. [{},Body], In = Out
@@ -302,8 +371,6 @@ generate_consumes(In,Out,[T],Clause) :-
 add_lhs_feature(LHS,NewLHS,Feature) :-
 	LHS =.. [ Rulename | LHSArgs ],
 	append(LHSArgs,[Feature],NewLHSArgs),
-%	list_to_clause(NewLHSArgsList,NewLHSA),
-%	write('add LHS feature'), write(NEWLHSArgs),nl,
 	NewLHS =.. [ Rulename | NewLHSArgs ].
 
 add_rhs_feature([],[],_,_).
@@ -355,12 +422,6 @@ add_selector_parsetree(SelectorRule,ModifiedRule) :-
 	add_rhs_feature(RHSList,FeatAddedRHS,ParseTree,selector_parsetree_condition),
 	list_to_clause(FeatAddedRHS,NewRHS),
 	ModifiedRule =.. [ :-, NewLHS, NewRHS ].
-	
-%add_impl_depth_feature(ImplRule,DepthAddedImplRule) :-
-	
-% Add a depth feature to the implementation rule
-%add_impl_rule_depth_feature(ImplRule,ModifiedRule) :-
-%	ImplRule =.. [ :-, LHS, RHS ],
 
 % Create a rule which increments the depth parameter and checks
 % if it exceeds the maxdepth option
@@ -379,11 +440,12 @@ create_incr_depth(Rule) :-
 expand_expanders(LHS,RHS,Rules) :-
 	create_expansion_rule(LHS,RHS,ExpanderRule),
 	assert(ExpanderRule),
-	write('Expander rule:'),nl,portray_clause(ExpanderRule),nl,
+	sdcg_debug((write('Expander rule:'),nl,portray_clause(ExpanderRule),nl)),
 	ExpanderRule =.. [ :-, Head, _ ],
 	functor(Head,ExpanderName,_),
 	ExpCall =.. [ ExpanderName, X ],
 	setof(X,ExpCall,Rules),
+	sdcg_debug((write('expansions: '), nl, write_rules(Rules),nl)),
 	retract(ExpanderRule).
 
 % Create a rule, the invocation of which results in combinations
@@ -439,21 +501,6 @@ condition_expansion(Conditions,Expanders,Vars) :-
 lhs_expansion(LHS,Expanders,Vars) :-
 	LHS =.. [ _ | Features ],
 	expand_feature_list(Features,Expanders,Vars).
-	/*
-	lhs_expansion(LHS,Expanders,Vars) :-
-		(functor(LHS, '|',2) ->
-			LHS =.. [ '|', Head, ConditionClause ],
-			Head =.. [ _, HeadFeatures ],
-			clause_to_list(ConditionClause,ConditionList),
-			expand_feature_list(HeadFeatures,HeadExpanders,HeadVars),
-			expand_feature_list(ConditionList,ConditionExpanders,ConditionVars),
-			append(HeadExpanders,ConditionExpanders,Expanders),
-			append(HeadVars,ConditionVars,Vars)
-			;
-			LHS =.. [ _ | Features ],
-			expand_feature_list(Features,Expanders,Vars)
-		).
-		*/
 
 % Expands the RHS of a grammar rule into a set of expansion clauses and unification variables
 rhs_expansion(RHS,Expanders,Vars) :-
@@ -592,18 +639,22 @@ regex_rule_kleene(_,NewConstituent,Rule) :-
 
 % Load, parse and compile the grammar given in File
 sdcg(File) :-
+	section('SDCG - Compiling'),
 	atom(File),
 	sdcg_parse(File),
-	section('Load and compile stage'),
-	%sdcg_debug(listing),
-	sdcg_compile.
+	!,
+	done_parsing.
+
 	
 % Load a list of files
-sdcg([]) :-
-	sdcg_compile.
+sdcg([]) :- done_parsing.
 sdcg([File|FilesRest]) :-
 	sdcg_parse(File),
 	sdcg(FilesRest).
+	
+done_parsing :-
+	generate_prism_program,
+	load_prism_program.
 
 % Open a grammar file, read all in all rules, compile rules
 sdcg_parse(File) :-
@@ -629,15 +680,38 @@ read_rules(Stream, Rules) :-
 % Normal prolog rules are asserted. 
 % Note, that Prolog rules, which are referrenced from the grammar (via @ expansion) must
 % be declared before the rules using them.
-compile_rules([]).
+compile_rules([]) :- write('Done compiling rules.').
 compile_rules([X|R]) :-
+	sdcg_debug((nl,nl,write_n(60,'='),nl,nl)),
+	sdcg_debug((write('Compiling: '),portray_clause(X),nl)),
 	functor(X,F,A),
 	(member([F,A], [[==>,2],[@=>,2],[sdcg_set_option,_]]) ->
-		call(X)
+		(call(X) ->
+			sdcg_debug((nl,write('Finished compiling rule: '), write(X),nl))
+		;
+			nl,	write('Failed to compile rule: '), nl,
+			portray_clause(X), nl,abort
+		)
 	;
 		assert(X)
 	),
 	compile_rules(R).
+
+generate_prism_program :-
+	section('Generating PRISM program'),
+	sdcg_option(prism_file, OutFile),
+	write_prism_program_to_file(OutFile),
+	write('Done generating PRISM program'),nl.
+
+load_prism_program :-
+	section('FOC compilation'),
+	sdcg_option(prism_file, OutFile),
+	sdcg_debug(fo_trace),
+	sdcg_option(prism_invoker,PI),
+	InvokePRISM =.. [ PI, OutFile ],
+	call(InvokePRISM),
+	write('program successfully loaded :-)'), nl,
+	verify.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Prism program generation:
@@ -646,18 +720,6 @@ compile_rules([X|R]) :-
 
 section(S) :-
 	nl,write('%%%  '),write(S),write('  %%%'),nl.
-
-sdcg_compile :-
-	sdcg_debug((write('compiling SDCG to PRISM program'),nl)),
-	sdcg_option(prism_file, OutFile),
-	write_prism_program_to_file(OutFile),
-	sdcg_debug(section('FOC compilation')),
-	%sdcg_debug(fo_trace),
-	sdcg_option(prism_invoker,PI),
-	InvokePRISM =.. [ PI, OutFile ],
-	call(InvokePRISM),
-	write('program successfully loaded :-)'), nl,
-	verify.
 
 write_prism_program :-
 	write_prism_program(user_output).
@@ -680,15 +742,26 @@ write_prism_program(Stream) :-
 	listing(values/2),
 	write_sdcg_start_rule,
 	retractall(values(_,_)), % Remove all asserted values clauses
+	section('Conditioning rules:'), % There might not be any
+	catch(sdcg_condition_rules(ConditionRules),_,ConditionRules=false),
+	((ConditionRules == false) ;
+		reverse(ConditionRules,OrderedConditionRules),
+		write_rules(OrderedConditionRules),
+		retractall(sdcg_condition_rules(_)),
+		condition_lists(CL),
+		remove_condition_lists(CL),
+		remove_rule(condition_lists,1)),
 	section('Selector rules:'),
 	sdcg_selector_rules(SelectorRules),
-	sdcg_debug((write('selector rules:'), write(SelectorRules),nl)),
-	write_rules(SelectorRules),
+	reverse(SelectorRules,OrderedSelectorRules),
+	sdcg_debug((write('selector rules:'), write(OrderedSelectorRules),nl)),
+	write_rules(OrderedSelectorRules),
 	retractall(sdcg_selector_rules(_)),
 	section('Implementation rules:'),
 	sdcg_implementation_rules(ImplementationRules),
-	sdcg_debug((write('implementation rules:'), write(ImplementationRules),nl)),
-	write_rules(ImplementationRules),
+	reverse(ImplementationRules,OrderedImplementationRules),
+	sdcg_debug((write('implementation rules:'), write(OrderedImplementationRules),nl)),
+	write_rules(OrderedImplementationRules),
 	retractall(sdcg_implementation_rules(_)),
 	section('Utilities:'),
 	write_consume,
@@ -744,7 +817,12 @@ remove_rule(N,Arity) :-
 	CL =.. [ N | L],
 	(clause(CL,Body) -> retract((CL :- Body));
 	throw(error(remove_rule(N/Arity))), write(CL), nl).
-	
+
+remove_condition_lists([]).
+remove_condition_lists([CL|R]) :-
+	remove_rule(CL,1),
+	remove_condition_lists(R).
+
 write_consume1 :-
 	Head =.. [ consume, A, B, C],
 	Body =.. [ =, A, [B|C] ],

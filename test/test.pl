@@ -2,8 +2,7 @@
 % Unit tests for the SDCG compiler 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:-cl('../config.pl').
-:-require('compiler/sdcg.pl').
+:- cl('../sdcg.pl').
 :- op(1200, xfx, ==>).
 :- op(1200, xfx, @=>).
 
@@ -75,6 +74,16 @@ test_remove_ground :-
 	remove_ground([X,y], [X]),
 	remove_ground([y,X], [X]),
 	remove_ground([X,y,Z],[X,Z]).
+	
+test_retract_each :-
+	A = blah(blah,blah),
+	B = foo(bar),
+	C = answer(42),
+	assert(A),assert(B),assert(C),
+	retract_each([A,B,C]),
+	not clause(A,_),
+	not clause(B,_),
+	not clause(C,_).
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MSW and rule assertions
@@ -316,6 +325,8 @@ print_list([Item|Rest]) :-
 	atom_codes(Item,Str),
 	write(Str),nl,
 	print_list(Rest).
+	
+	
 
 test_quote_all :-
 	assert(test(a)),

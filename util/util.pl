@@ -5,6 +5,13 @@
 
 dot :- write('.').
 
+write_n(0,_).
+write_n(N,Atom) :-
+	integer(N),
+	M is N - 1,
+	write(Atom),
+	write_n(M,Atom).
+
 % Tell me if X is a list (note, doesn't work with empty lists )
 is_list(X) :-
 	nonvar(X),
@@ -57,10 +64,30 @@ double_append(Lst1,Lst2,Lst3,Lst4) :-
 assert_once(C) :-
 	(not(clause(C,_)) -> assert(C) ; true).
 
+atomlist_to_clauses([],_,[]).
+atomlist_to_clauses([Atom],Arity,[Clause]) :-
+	unifiable_list(Arity,L),
+	Clause =.. [ Atom | L].
+
+% Retract each clause in a list
+retract_each([]).
+retract_each([C|R]) :-
+	write('Trying to retract '), write(C),nl,
+	retractall(C),
+	retract_each(R).
+
 replacement_name(Name, Arity, Number, Conditions, NewName) :-
 	hyphenate(Name, Arity, N1),
 	hyphenate(N1,Number,N2),
 	NewName =.. [ N2 | Conditions ].
+
+replacement_name(Name, Arity, Number, NewName) :-
+	hyphenate_list([Name, Arity, Number], NewName).
+	
+hyphenate_list([A],A).
+hyphenate_list([A,B|R],H) :-
+	hyphenate(A,B,C),
+	hyphenate_list([C|R],H).
 
 % Stitch together the first tree arguments
 % as the fourth: eg. 

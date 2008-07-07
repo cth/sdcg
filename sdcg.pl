@@ -8,11 +8,14 @@
 
 % This is the path to directory where the SDCG compiler is located:
 % Edit this to reflect the path of your installation.
-sdcg_directory('/Users/cth/Documents/code/sdcg').
+sdcg_config(sdcg_directory('/Users/cth/Documents/code/sdcg')).
 
 % Load the compiler library
-:- 	sdcg_directory(Dir), 
+:- 	catch(sdcg_directory(Dir),_,sdcg_config(sdcg_directory(Dir))),
 	atom_concat(Dir, '/util/util.pl',Utilities),
 	cl(Utilities),
 	atom_concat(Dir, '/compiler/sdcg.pl', Compiler),
 	cl(Compiler).
+
+:- dynamic sdcg_user_option/2.
+:- dynamic sdcg_start_definition/2.

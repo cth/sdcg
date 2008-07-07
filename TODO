@@ -2,6 +2,7 @@ TODO
 ====
 
 MISC STUFF:
+	- Der er noget snask med håndteringen af regex regler. Er ikke sikker på at den samme regel ikke bliver krearet flere gange.. Kig på '@=>'/2
 	- Make a datafile option
 	- More sanity checks on the grammar. It would be nice if the compiler could check 
 	  various low-hanging fruits before FOC commences.
