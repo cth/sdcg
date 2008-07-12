@@ -296,3 +296,5 @@ lex(adverb,Word) :-
 	enum([only, often, generally, also, nevertheless, upon, together, back, newly, no, likely,
 		meanwhile, near, then, heavily, there, apparently, yet, outright, fully, aside, consistently,
 		specifically, formally, ever, just], Word).
+		
+lex(comma,comma).

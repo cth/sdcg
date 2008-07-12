@@ -1,3 +1,5 @@
+% fool compiler:
+%start ==> s.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Expand modes for lex are all empty since lex is used as 
@@ -7,7 +9,7 @@ expand_mode(lex(-,-,-)).
 expand_mode(lex(-,-,-,-)).
 expand_mode(lex(-,-,-,-,-)).
 expand_mode(lex(-,-,-,-,-,-)).
-expand_mode(lex(-,-,-,-,-,-,-)).
+expand_mode(lex(-,-,-,-,-,-,-)). 
 
 adjective(Word) ==>
 	{ lex(adjective,Word) },
@@ -17,7 +19,7 @@ det(@lex(determiner,Number,_), Number,Word) ==>
 	{ lex(determiner,Number,Word) },
 	[Word].
 
-wh_det(@lex(determiner,Number,_),Number,Word) ==>
+wh_determiner(@lex(wh_determiner,Word),Word) ==>
 	{ lex(wh_determiner,Word) },
 	[Word].
 
@@ -25,11 +27,11 @@ noun(@lex(noun,Countable,Number,Gender,_), Countable,Number,Gender,Word) ==>
 	{ lex(noun,Countable,Number,Gender,Word) },
 	[ Word ].
 
-cardinal(@lex(cardinal,Number),Number,Word) ==>
+cardinal(@lex(cardinal,Number,Word),Number,Word) ==>
 	{ lex(cardinal,Number,Word) },
 	[Word].
 
-ordinal(@lex(ordinal,Number), Number,Word) ==>
+ordinal(@lex(ordinal,Number,Word), Number,Word) ==>
 	{ lex(ordinal,Number,Word) },
 	[Word].
 
@@ -39,15 +41,16 @@ quantifier(@num(Number),Word) ==>
 	[Word].
 
 conjunction(Word) ==>
-	{lex(conjunction(Word))},
+	{lex(conjunction,Word)},
 	[Word].
 
 preposition(Word) ==>
-	{ lex(preposition(Word)) },
+	{ lex(preposition,Word) },
 	[Word].
+pronoun(Number,Person,Case,Gender).
 
-pronoun(@lex(pronoun,Number,Person,Case,_), Number,Person,Case,Word) ==>
-	{ lex(pronoun,Number,Person,Case,Word) },
+pronoun(@lex(pronoun,Number,Person,Case,Gender,_), Number,Person,Case,Gender,Word) ==>
+	{ lex(pronoun,Number,Person,Case,Gender,Word) },
 	[ Word ].
 
 relative_pronoun(@lex(relative_pronoun,Case,Gender,_), Case ,Gender, Word) ==>
@@ -64,6 +67,10 @@ gerund_verb(Word) ==>
 
 modal(Word) ==> 
 	{ lex(modal_verb,Word) },
+	[Word].
+	
+comma(Word) ==>
+	{ lex(comma,Word) },
 	[Word].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

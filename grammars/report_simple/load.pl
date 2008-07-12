@@ -4,7 +4,7 @@ sdcg_directory('../..').
 :- sdcg_set_option(parsetree).
 %:- sdcg_set_option(maxdepth,10).
 :- sdcg_set_option(use_foc_cheat).
-:- sdcg('mini_grammar.pl').
+:- sdcg('grammar.pl').
 
 % Some training data to 
 

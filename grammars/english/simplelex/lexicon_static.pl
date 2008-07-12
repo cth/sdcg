@@ -161,3 +161,5 @@ lex(conjunction, and).
 lex(preposition, from).
 lex(gerund_verb, being).
 lex(modal_verb, should).
+lex(adverb, only).
+lex(comma, comma).

@@ -3,8 +3,7 @@
 % consisting only of ground atoms.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- cl('../../../config.pl').
-:- require('util/util.pl').
+:- cl('../../../sdcg.pl').
 
 % Load the dynamic lexicon
 :- [helpers,lexicon_dynamic].

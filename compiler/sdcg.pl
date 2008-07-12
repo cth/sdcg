@@ -25,6 +25,7 @@ sdcg_default_option(prism_file, 'generated_sdcg.psm').
 sdcg_default_option(prism_invoker, prismn). % Use prismn (with FOC/FAM as default)
 sdcg_default_option(use_foc_cheat,false).
 sdcg_default_option(debug,false).
+sdcg_default_option(check_generated_program,false).
 
 sdcg_option(Opt, Val) :-
 	(clause(sdcg_user_option(Opt,_),_) ->
@@ -651,11 +652,17 @@ sdcg([]) :- done_parsing.
 sdcg([File|FilesRest]) :-
 	sdcg_parse(File),
 	sdcg(FilesRest).
-	
+
 done_parsing :-
 	generate_prism_program,
+	(sdcg_option(check_generated_program) -> 
+		sdcg_option(prism_file, PrismFile),
+		check_generated_program(PrismFile)
+		;
+		true
+	),
 	load_prism_program.
-
+	
 % Open a grammar file, read all in all rules, compile rules
 sdcg_parse(File) :-
 	sdcg_debug((write('Loading SDCG in '), write(File), nl)),
@@ -700,7 +707,7 @@ compile_rules([X|R]) :-
 generate_prism_program :-
 	section('Generating PRISM program'),
 	sdcg_option(prism_file, OutFile),
-	write_prism_program_to_file(OutFile),
+	catch(write_prism_program_to_file(OutFile),E,(set_output(user_output),nl,write(E),nl,abort)),
 	write('Done generating PRISM program'),nl.
 
 load_prism_program :-
@@ -712,6 +719,67 @@ load_prism_program :-
 	call(InvokePRISM),
 	write('program successfully loaded :-)'), nl,
 	verify.
+
+sdcg_abort(E) :-
+	nl,write(E),nl,abort.
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Program checking
+% Will check that a generated program is complete
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This actually proofs that the program is (should be) FOC compilable.
+% If this check doesn't fail, then the start goal is universally 
+% quantified.
+check_generated_program(File) :-
+	section('Checking program completeness'),
+	write('Loading SDCG generated PRISM program in '), write(File), nl,
+	open(File, read, Stream),
+	ground(Stream),
+	read_rules(Stream, Rules),
+	assert_rules(Rules),
+	% Create check call
+	sdcg_start_definition(StartSymbol/Arity),
+	(sdcg_option(parsetree) ->
+		ArityUserFeatures is Arity - 2
+		;
+		ArityUserFeatures is Arity - 1
+	),
+	unifiable_list(ArityUserFeatures,UserParamList),
+	(sdcg_option(parsetree) ->
+		append(UserParamList, [[],_parsetree],ParamList)
+		;
+		append(UserParamList, [[]],ParamList)
+	),
+	CallStart =.. [ StartSymbol | ParamList ],
+	catch(findall(ParamList,CallStart,Results),Error,check_program_error(Error)),
+	% Check that all returned results are ground - This is a prerequisite of FOC
+	write(Results),
+	(ground(Results) ; check_program_error(error(program_generates_nonground_goal(ParamList)))),
+	% If we ever get here, then the program check was successful
+	write('Program checked: No errors found'),nl,
+	retract_rules(Rules),
+	close(Stream).
+
+% Since the program has not yet been loaded with prism, 
+% this will shadow msw/2 for now. When the program is
+% loaded with prism this will be overwritten again.
+msw(X,Y) :-
+	values(X,Z),
+	member(Y,Z).
+	
+all_ground([]).
+all_ground([X|Rest]) :-	ground(X), all_ground(Rest).
+
+assert_rules([]).
+assert_rules([Rule|RulesRest]) :- assert(Rule), assert_rules(RulesRest).
+
+retract_rules([]).
+retract_rules([Rule|RulesRest]) :- retract(Rule), retract_rules(RulesRest).
+
+check_program_error(E) :-
+	nl,write('Program check failed:'),nl,
+	write(E),nl,
+	abort.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Prism program generation:
@@ -731,13 +799,13 @@ simulate_write_prism_program :-
 
 write_prism_program_to_file(FileName) :-
 	open(FileName,write,Stream),
-	write_prism_program(Stream),
+	catch(write_prism_program(Stream),E,throw(E)),
 	close(Stream).
 
 write_prism_program(Stream) :-
 	current_output(PreviousStream),
 	set_output(Stream),
-	write_prism_directives,
+	catch(write_prism_directives,E,throw(E)),
 	section('MSW declarations'), 
 	listing(values/2),
 	write_sdcg_start_rule,
@@ -801,6 +869,7 @@ write_prism_directives :-
 write_sdcg_start_rule :-
 	section('Start symbol'),
 	sdcg_start_definition(StartSymbol/Arity),
+	portray_clause(sdcg_start_definition(StartSymbol/Arity)),
 	listing(StartSymbol/Arity),
 	unifiable_list(Arity,L),
 	Head =.. [ StartSymbol | L],

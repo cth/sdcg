@@ -1,11 +1,11 @@
 % Assumes that SDCG compiler is loaded.
-lexicon_directory("grammars/english/simplelex/").
+lexicon_directory('grammars/english/simplelex/').
 lexicon_files([helpers,noun,determiner,preposition,punctuation,relative,verb,other]). 
 
 only_some_lexicon_files([helpers,noun,verb]). %,other,preposition,punctuation,relative,verb]).
 %lexicon_files([helpers,verb]).
 
-
+/*
 load_lexicon_files([]).
 load_lexicon_files([File|Files]) :-
 	lexicon_directory(LexDir),
@@ -16,6 +16,16 @@ load_lexicon_files([File|Files]) :-
 	resolve_path(LexFile,AbsLexFile),
 	write(AbsLexFile),nl,
 	sdcg_parse(AbsLexFile),
+	load_lexicon_files(Files).
+*/
+	
+load_lexicon_files([]).
+load_lexicon_files([File|Files]) :-
+	lexicon_directory(LexDir),
+	atom_concat(File,'.pl',FileWithEnd),
+	atom_concat(LexDir,FileWithEnd,RelFile),
+	resolve_path(RelFile,AbsFile),
+	sdcg_parse(AbsFile),
 	load_lexicon_files(Files).
 
 simplelex_load :-
