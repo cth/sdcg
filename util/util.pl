@@ -247,11 +247,9 @@ extra_quotes(InputAtom,Quoted) :-
 % Loading files and resolving paths
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 resolve_path(Relative,Absolute) :-
-	sdcg_directory(Basedir),
-	atom_codes(Basedir,BasedirChars),
-	atom_codes(Relative,RelativeChars),
-	append(BasedirChars,RelativeChars,AbsoluteChars),
-	atom_codes(Absolute,AbsoluteChars).
+	catch(sdcg_directory(Basedir),_,sdcg_config(sdcg_directory(Basedir))),
+	atom_concat(Basedir, '/', P1),
+	atom_concat(P1,Relative,Absolute).
 
 % require compiles and loads a file within the distribution based
 % on a path relative to the base directory
