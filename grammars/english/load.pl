@@ -1,9 +1,9 @@
 % Load compiler
 :- cl('../../sdcg.pl').
 :- sdcg_set_option(debug).
-%:- sdcg_set_option(maxdepth,10).
+:- sdcg_set_option(maxdepth,4).
 %:- sdcg_set_option(parsetree).
-%:- sdcg_set_option(use_foc_cheat).
+:- sdcg_set_option(use_foc_cheat).
 %:- sdcg_set_option(check_generated_program).
 	
 % Load the lexicon (simple)

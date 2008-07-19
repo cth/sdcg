@@ -67,8 +67,8 @@ lex(pronoun, sing, third, reflexive, neut, itself).
 lex(pronoun, plur, third, reflexive, masc, themselves).
 lex(pronoun, plur, third, reflexive, fem, themselves).
 lex(pronoun, plur, third, reflexive, neut, themselves).
-lex(pronoun, sing, third, subjective, neut, 'Alaska').
-lex(pronoun, sing, third, objective, neut, 'Alaska').
+lex(pronoun, sing, third, subjective, neut, alaska).
+lex(pronoun, sing, third, objective, neut, alaska).
 lex(noun, countable, sing, neut, company).
 lex(noun, countable, plur, neut, companies).
 lex(noun, countable, sing, neut, department).
@@ -113,7 +113,7 @@ lex(noun, mass, sing, neut, math).
 lex(noun, mass, plur, neut, math).
 lex(noun, mass, sing, neut, water).
 lex(noun, mass, plur, neut, water).
-lex(pronoun, sing, first, subjective, 'I').
+lex(pronoun, sing, first, subjective, i).
 lex(verb, plur, first, present, investigate).
 lex(verb, sing, first, present, investigate).
 lex(verb, plur, third, present, investigate).

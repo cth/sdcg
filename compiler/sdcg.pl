@@ -145,6 +145,7 @@ rewrite_start_rule(LHS,RHS) :-
 % Rewrite rules with conditioning patterns
 rewrite_rule(LHS,RHSL) :-
 	functor(LHS,'|',_), % Guard: only rules with conditioning patterns are rewritten using this rule
+	sdcg_debug((write('rewrite_rule (conditioned rule)'),nl)),
 	LHS =.. [ '|', Head, ConditionsClause ],
 	clause_to_list(ConditionsClause,Conditions),
 	Head =.. [ Name | Features],
@@ -164,6 +165,7 @@ rewrite_rule(LHS,RHSL) :-
 
 % Rewrite rules without conditioning patterns
 rewrite_rule(LHS,RHS) :-
+	sdcg_debug((write('rewrite_rule (regular rule)'),nl)),
 	LHS =.. [ Name | Features],
 	functor(LHS,_,Arity),
 	% Expand values(Rulename, ...) to include this new nonterminal and give it a unique new name:
@@ -174,6 +176,7 @@ rewrite_rule(LHS,RHS) :-
 	sdcg_debug((write('Selector Rule: '),nl, portray_clause(SelectorRule))),
 	% Create Implementation rule
 	create_implementation_rule(ImplRuleName,Name,Features,RHS,ImplRule),
+	write('Done creating implementation rule:'), write(ImplRule), nl,
 	expand_asserted_set(sdcg_implementation_rules, ImplRule),
 	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))).
 
@@ -281,6 +284,7 @@ resolve_conditioning_params([-|CMRest],[_|ParamRest],CondParamRest) :-
 % RHS(in) : A list containing the constituents of the rule
 % ImplRule(out) : The rewritten implementation rule.
 create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule) :-
+	write(create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule)),nl,
 	append(Features,[In,Out],Features1),
 	(sdcg_option(parsetree) ->
 		(sdcg_option(parsetree_include_difflists) -> 
@@ -324,7 +328,7 @@ rewrite_rule_rhs(In, Out, Depth, [R], ParseTreeFeature, Body) :-
 		Body =.. [ =, Out, In ]
 	;is_list(R) ->
 		generate_consumes(In,Out,R,Body),
-		ParseTreeFeature = []
+		ParseTreeFeature = [[]]
 	;is_composed(R) ->
 		write('composed rules encountered: '), write(R),nl
 	;is_code_block(R) ->
@@ -452,6 +456,9 @@ expand_expanders(LHS,RHS,Rules) :-
 % Create a rule, the invocation of which results in combinations
 % of grammar rules based on the expansions in the original rule
 create_expansion_rule(LHS,RHS,ExpRule) :-
+	write('create_expansion_rule'),nl,
+	write('lhs: '), write(LHS), nl,
+	write('rhs: '),write(RHS), nl,
 	% Extract LHS expanders:
 	(functor(LHS,'|',2) -> % Do we have conditions? They might need expansion too.
 		LHS =.. [ '|', Head, Conditions],
@@ -492,7 +499,6 @@ create_expansion_rule(LHS,RHS,ExpRule) :-
 	list_to_clause(ExpRuleBodyList,ExpRuleBody),
 	ExpRuleHead =.. [ expander, R ],
 	ExpRule =.. [ :-, ExpRuleHead, ExpRuleBody ], !.
-	
 	
 condition_expansion(Conditions,Expanders,Vars) :-
 	clause_to_list(Conditions,ConditionList),

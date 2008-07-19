@@ -1,18 +1,39 @@
-sdcg(TagList) ==> tag(none,_,TagList).
+% How to do this:
+% - Each sentence must have some sort of stop marker. 
+% - Or maxdepth must be set to the maximal sentence length.
 
-%tag(none,[Tag|TagsRest]) ==>
-%	@word_l(W),
-%	tag(Tag,TagsRest).
+tag(none).
+tag(det).
+tag(noun).
+tag(verb).
+tag(modalverb).
 
-@brown_tag ==> 
-	@word_l(W).
+word(the). % Can be determiner only
+word(can). % verb/noun
+word(will).
+word(rust).
 
-tag(@brown_tag(Tag),@brown_tag(Next), [Tag|TagsRest]) ==>
-	@word_l(W),
-	tag(NextTag,TagsRest).
+consume_word([Word]) :-
+	word(Word).
 	
-% Matching the last word of a sentence.
-tag(@brown_tag(T),_,[T|[]]) ==>
-	@word_l(W).
+conditioning_mode(tag_word(+,-,-)).
 
-%stop(@brown_tag,[]) ==> [].
+% Taglist contains a list of tags after application of the start rule
+start(TagList) ==> 
+	tag_word(none,_,TagList).
+	
+% Feature 1: The previous tag
+% Feature 2: The current tag
+% Feature 3: A list of tags encountered so far
+/*
+Won't train
+tag_word(Previous, @tag(Current), [Current|TagsRest]) | @tag(Previous) ==>
+	@consume_word(W),
+	?(tag_word(Current,_,TagsRest)).
+*/
+tag_word(Previous, @tag(Current), [Current|TagsRest]) | @tag(SomeTag) ==>
+	@consume_word(W),
+	tag_word(Current,_,TagsRest).
+	
+tag_word(Previous, @tag(Current), [Current]) | @tag(SomeTag) ==>
+	@consume_word(W).	

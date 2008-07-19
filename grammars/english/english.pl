@@ -15,7 +15,6 @@ sentence ==>
 
 % Imperative structure verb sentences. Have no subject.
 % Example: Show the lowest fare
-
 sentence ==>
 	vp(Number,Tense,Person).
 	
@@ -64,31 +63,36 @@ sentence ==>
 % *How do you do?
 sentence ==>
 	wh_determiner(Stem),
-	np(NPNumber1,NPPerson1,NPGender1),
-	verb(VNumber,VTense,VPerson,to_do),
+	np(Number1,Person1,NPGender1),
+	verb(Number,VTense,Person1,to_do),
 	np(NPNumber2,NPPerson2,NPGender2),
-	vp(VPNumber,present,VPPerson), % is always in present tense
+	vp(VPNumber,present,VPPerson). % is always in present tense
+/*
 	% We do explicit agreement for this one, as it is a bit complicated.
 	{
 		% If NP is pronoun like 'he' (sing,2nd person) then the verb 'to be' must be 'does' (sing,2nd person).
 		VNumber == NPNumber1,
 		VPerson == NPPerson1
 	}.
+*/
 
 % Which editor have you used
 sentence ==>
 	wh_determiner(Stem),
-	np(NPNumber1,NPPerson1,NPGender1),
-	verb(VNumber,VTense,VPerson,to_do),
+	np(Number1,Person1,NPGender1),
+	verb(Number1,VTense,Person1,to_do),
 	% aux(Num2), % _^ 
 	np(NPNumber2,NPPerson2,NPGender2),
-	vp(VPNumber,past,VPPerson), % is always past tense
+	vp(VPNumber,past,VPPerson). % is always past tense
+
+/*
 	% We do explicit agreement for this one, as it is a bit complicated.
 	{
 		% If NP is pronoun like 'he' (sing,2nd person) then the verb 'to have' must be 'has' (sing,2nd person).
 		VNumber == NPNumber1,
 		VPerson == NPPerson1
 	}.
+*/
 
 % A very simple account of fronting:
 % On the table.
@@ -118,7 +122,7 @@ sentence ==>
 % It [sucks].
 vp(Number,Tense,Person) ==>
 	verb(Number,Tense,Person,Stem).
-	
+
 % vp --> modal, verb.
 % It will happen.
 vp(Number,Tense,Person) ==>
@@ -213,9 +217,10 @@ gerund_vp ==>
 % np: Noun phrases
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Features:
-% - ParseTree
 % - Number: sing/plur
-% - Person: 
+% - Person: first,second,third
+% - Case: 
+%  
 % Questions to self: Should np have person? - yes, since they can contain pronouns
 % Then, can we assume all common are third person? - They are in brown, so yes.
 
@@ -227,7 +232,7 @@ gerund_vp ==>
 % Plural nouns:  bunnies are funny.
 % Singular nouns is not so easy: *bunny is funny (This is like baby talk)
 % We can probably, make a rule for this in the grammar corrector
-np(third,Number,Case) ==>
+np(Number,third,Case) ==>
 	nominal(Person,Number,Case).
 
 % np --> det, nominal
@@ -262,12 +267,9 @@ np(Number,Person,Gender) ==>
 % *we and they
 % --> must be third person
 np(plur,Person,neut) ==>
-	np(Number1,Person,Gender1),
+	np(Number1,third,Gender1),
 	conjunction(CStem),
-	np(Number2,Person,Gender2),
-	{
-		Person == third
-	}.
+	np(Number2,third,Gender2).
 
 % np --> ap, nominal.
 % Adjective phrase and nominal.

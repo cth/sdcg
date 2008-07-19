@@ -129,7 +129,7 @@ lex(preposition,Word) :-
 % One rule to ring them all
 
 % First-person singular:
-lex(pronoun,sing,first,subjective,'I').
+lex(pronoun,sing,first,subjective,i).
 lex(pronoun,sing,first,objective,G,me) :- gender(G).
 lex(pronoun,sing,first,possesive-determiner,G,my) :- gender(G).
 lex(pronoun,sing,first,possesive-nominal,G,mine) :- gender(G).
@@ -174,7 +174,7 @@ lex(pronoun,plur,third,reflexive,G,themselves) :- gender(G).
 % Some places
 lex(pronoun,sing,third,Case,neut,Word) :-
 	subj_obj(Case),
-	enum(['Alaska','Copenhagen', 'New York'],Word).
+	enum([alaska,copenhagen, newYork],Word).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Relative pronouns

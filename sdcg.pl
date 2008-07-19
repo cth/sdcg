@@ -17,5 +17,13 @@ sdcg_config(sdcg_directory('/Users/cth/Documents/code/sdcg')).
 	atom_concat(Dir, '/compiler/sdcg.pl', Compiler),
 	cl(Compiler).
 
+/* Tracing the compiler requires that it is dynamically loaded:
+:- 	catch(sdcg_directory(Dir),_,sdcg_config(sdcg_directory(Dir))),
+	atom_concat(Dir, '/util/util.pl',Utilities),
+	[Utilities],
+	atom_concat(Dir, '/compiler/sdcg.pl', Compiler),
+	[Compiler].
+*/
+
 :- dynamic sdcg_user_option/2.
 :- dynamic sdcg_start_definition/2.
