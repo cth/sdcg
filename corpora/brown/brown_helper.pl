@@ -55,6 +55,10 @@ sentence_words([],[]).
 sentence_words([[Word,_]|SentenceRest], [Word|WRest]) :-
 	sentence_words(SentenceRest,WRest).
 	
+sentence_tags([],[]).
+sentence_tags([[_,Tag]|SentenceRest], [Tag|TRest]) :-
+	sentence_tags(SentenceRest,TRest).
+	
 write_words([]).
 write_words([Word|R]) :-
 	write(Word),
