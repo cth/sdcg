@@ -2,17 +2,6 @@
 % - Each sentence must have some sort of stop marker. 
 % - Or maxdepth must be set to the maximal sentence length.
 
-tag(none).
-tag(det).
-tag(noun).
-tag(verb).
-tag(modalverb).
-
-word(the). % Can be determiner only
-word(can). % verb/noun
-word(will).
-word(rust).
-
 consume_word([Word]) :-
 	word(Word).
 	
@@ -36,4 +25,4 @@ tag_word(Previous, @tag(Current), [Current|TagsRest]) | @tag(SomeTag) ==>
 	tag_word(Current,_,TagsRest).
 	
 tag_word(Previous, @tag(Current), [Current]) | @tag(SomeTag) ==>
-	@consume_word(W).	
+	@consume_word(W).
