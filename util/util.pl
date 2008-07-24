@@ -132,8 +132,11 @@ remove_ground([V|R],NotGround) :-
 
 % Removes empty list elements from a list
 remove_empty([],[]).
-remove_empty([[]|R],NonEmpty) :- remove_empty(R,NonEmpty).
-remove_empty([E|R],[E|NonEmpty]) :- remove_empty(R,NonEmpty).
+remove_empty([E|R],NonEmpty) :-
+	E == [],
+	remove_empty(R,NonEmpty).
+remove_empty([E|R],[E|NonEmpty]) :- 
+	remove_empty(R,NonEmpty).
 
 % Flatten a list at depth one. 
 flatten_once([],[]).

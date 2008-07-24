@@ -11,7 +11,7 @@
 :- op(1200, xfx, @=>).
 
 :- dynamic sdcg_user_option/2.
-:- dynamic sdcg_start_definition/2.
+:- dynamic sdcg_start_definition/1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SDCG Options
@@ -26,6 +26,7 @@ sdcg_default_option(prism_invoker, prismn). % Use prismn (with FOC/FAM as defaul
 sdcg_default_option(use_foc_cheat,false).
 sdcg_default_option(debug,false).
 sdcg_default_option(check_generated_program,false).
+sdcg_default_option(use_append,false).
 
 sdcg_option(Opt, Val) :-
 	(clause(sdcg_user_option(Opt,_),_) ->
@@ -117,7 +118,11 @@ rewrite_start_rule(LHS,RHS) :-
 	% The symbol "StartSymbol" is the root of the tree and must be unique, so throw
 	% an exception if this is not the case.
 	sdcg_option(start_symbol,StartSymbol),
-	(clause(values(sdcg_start_definition,Def),_) -> throw(error(sdcg_start_symbol_already_defined(Def))) ; true),
+	(clause(values(sdcg_start_definition,Def),_) ->
+		throw(error(sdcg_start_symbol_already_defined(Def)))
+		;
+		true
+	),
 	% Add diference lists to LHS:
 	LHS =.. [ StartSymbol | Features ],
 	append(Features,[In,Out], WithDiffList),
@@ -140,7 +145,24 @@ rewrite_start_rule(LHS,RHS) :-
 	% Create and assert rule and start definition definition rule:
 	assert_once(StartRule),
 	functor(NewLHS,_,Arity),
-	assert_once(sdcg_start_definition(StartSymbol/Arity)).
+	assert_once(sdcg_start_definition(StartSymbol/Arity)),
+	sdcg_debug((write('before check use_append'),nl)),
+	(sdcg_option(use_append) ->	rewrite_start_rule_append(LHS,RHS) ; true).
+
+% Create append version of start rule	
+rewrite_start_rule_append(LHS,RHS) :-
+	sdcg_debug((write(rewrite_start_rule_append(LHS,RHS)),nl)),
+	sdcg_option(start_symbol,StartSymbol),
+	LHS =.. [ StartSymbol | Features ],
+	atom_concat(append_, StartSymbol,NewStartSymbol),
+	rewrite_append_rule_rhs(RHS,NewRHS,Input),
+	append(Features,[Input],NewFeatures),
+	NewLHS =.. [ NewStartSymbol | NewFeatures ],
+	StartRule =.. [ :-, NewLHS, NewRHS ],
+	assert_once(StartRule),
+	sdcg_debug((write(StartRule),nl)),
+	functor(NewLHS,_,Arity),
+	assert_once(sdcg_start_definition_append(NewStartSymbol/Arity)).
 
 % Rewrite rules with conditioning patterns
 rewrite_rule(LHS,RHSL) :-
@@ -165,7 +187,7 @@ rewrite_rule(LHS,RHSL) :-
 
 % Rewrite rules without conditioning patterns
 rewrite_rule(LHS,RHS) :-
-	sdcg_debug((write('rewrite_rule (regular rule)'),nl)),
+	sdcg_debug((write('rewrite_rule (regular append rule)'),nl)),
 	LHS =.. [ Name | Features],
 	functor(LHS,_,Arity),
 	% Expand values(Rulename, ...) to include this new nonterminal and give it a unique new name:
@@ -178,7 +200,16 @@ rewrite_rule(LHS,RHS) :-
 	create_implementation_rule(ImplRuleName,Name,Features,RHS,ImplRule),
 	write('Done creating implementation rule:'), write(ImplRule), nl,
 	expand_asserted_set(sdcg_implementation_rules, ImplRule),
-	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))).
+	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))),
+	(sdcg_option(use_append) ->
+		atom_concat(append_, ImplRuleName,AppImplRuleName),
+		create_selector_rule_append(Name,Arity,AppSelectorRule),
+		expand_asserted_set(sdcg_selector_rules,AppSelectorRule),
+		create_implementation_rule_append(ImplRuleName,Features,RHS,AppImplRule),
+		expand_asserted_set(sdcg_implementation_rules,AppImplRule)
+		; 
+		true
+	).
 
 % Some options may lead to generation of extra features
 % For instance, if the the maxdepth option or parsetree option
@@ -207,6 +238,19 @@ create_selector_rule(Name,Arity,SelectorRule) :-
 		;
 		add_selector_depth_check(SelectorRule2,SelectorRule)
 	).
+	
+% Create the append version of the selector rule
+create_selector_rule_append(Name,Arity,SelectorRule) :-
+	atom_concat(append_,Name,AppName),
+	unifiable_list(Arity,FeatureStub),
+	MSW =.. [ Name, Arity ],
+	Switch =.. [ msw, MSW, SwitchVar ],
+	append(FeatureStub,[Output], HeadParams),
+	append(FeatureStub,[Output], BodyParams),
+	Selector =.. [ sdcg_append_rule | [SwitchVar|BodyParams] ],
+	RHS = (Switch,Selector),
+	LHS =.. [ AppName | HeadParams ],
+	SelectorRule =.. [ :-, LHS, RHS ].
 
 create_condition_rule(Name,Arity,Conditions,ConditionRule,ConditionedSelectorName) :-
 	% Create an unique identifier for selector rule for these conditions by expanding
@@ -314,6 +358,21 @@ create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule) :-
 		rewrite_rule_rhs(In,Out,Depth,RHS,Parsetree,ImplRuleRHS)
 	),
 	ImplRule =.. [ :-, LHS, ImplRuleRHS ].
+	
+	
+% Generate and implementation rule for the append version of the PRISM program
+create_implementation_rule_append(Name,Features,RHS,ImplRule) :-
+	sdcg_debug((write(create_implementation_rule_append(Name,Features,RHS,ImplRule)),nl)),
+	(RHS == [[]] ->
+		append(Features,[],Features1),
+		ImplRuleRHS = true,
+		Output = [[]]
+	;
+		rewrite_append_rule_rhs(RHS,ImplRuleRHS,Output)
+	),
+	append(Features,[Output],Features1),
+	LHS =.. [ sdcg_append_rule | [ Name | Features1 ]],
+	ImplRule =.. [ :-, LHS, ImplRuleRHS ].
 
 % rewrite_rule_rhs goes through constituents of a rule and rewrites each of them.
 % In,Out (in) : The in and out difference list
@@ -359,6 +418,36 @@ rewrite_rule_rhs(In, Out,Depth, [R | RHS], [ParseTree|ParseTreesRest], Body) :-
 	rewrite_rule_rhs(In,NextIn,Depth,[R],[ParseTree],Clause),!,
 	rewrite_rule_rhs(NextIn,Out,Depth,RHS,ParseTreesRest,ClausesRest),
 	Body = (Clause, (ClausesRest)).
+	
+rewrite_append_rule_rhs1([[]],true,[]).
+rewrite_append_rule_rhs1([R],true,R) :-
+	is_list(R).
+rewrite_append_rule_rhs1([R],Body,[]) :- 
+	is_code_block(R),
+	R =.. [{},Body].
+rewrite_append_rule_rhs1([R],Body,[App]) :-
+	R =.. [Name|Features],
+	append(Features,[App],Features1),
+	atom_concat(append_,Name,AppName),
+	Body =.. [AppName | Features1].
+rewrite_append_rule_rhs1([R|RHS],Body,App) :-
+	rewrite_append_rule_rhs1([R],Clause,App1),!,
+	rewrite_append_rule_rhs1(RHS,ClausesRest,AppRest),
+	Body = (Clause, (ClausesRest)),
+	append(App1,AppRest,App).
+
+rewrite_append_rule_rhs([R],Body,Output) :-
+	rewrite_append_rule_rhs1([R],Body,[Output]).
+rewrite_append_rule_rhs([R|RHS],Body,Output) :-
+	rewrite_append_rule_rhs1([R|RHS],Constituents,AppAll),
+	remove_empty(AppAll,App),
+	clause_to_list(Constituents,ConstList),
+	write(Constituents),nl,
+	delete(true,ConstList,ReducedConstituentsList),
+	write(ReducedConstituentsList),nl,
+	list_to_clause(ReducedConstituentsList,ReducedConstituents),
+	AppendRule1 =.. [ append_all, App, Output ],
+	Body = (ReducedConstituents,AppendRule1).
 
 % FIXME: I might move this to PRISM program generation instead
 generate_consumes(In,Out,[T],Clause) :-
@@ -433,7 +522,8 @@ add_selector_parsetree(SelectorRule,ModifiedRule) :-
 create_incr_depth(Rule) :-
 	Head =.. [ incr_depth, Depth, NewDepth ],
 	sdcg_option(maxdepth,Max),
-	Body = ((integer(Depth), (NewDepth is Depth+1, (NewDepth<Max)))),
+	Body = (NewDepth is Depth+1, (NewDepth<Max)),
+	%Body = ((integer(Depth), (NewDepth is Depth+1, (NewDepth<Max)))),	
 	Rule =.. [ :-, Head, Body ].
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -839,23 +929,38 @@ write_prism_program(Stream) :-
 	retractall(sdcg_implementation_rules(_)),
 	section('Utilities:'),
 	write_consume,
+	(sdcg_option(use_append) -> write_append_all ; true),
 	(sdcg_option(use_foc_cheat) -> write_mysterious_all ; true),
 	(not sdcg_option(maxdepth,0) -> write_incr_depth ; true),
 	section('User defined'),
 	listing,
 	set_output(PreviousStream).
-
+	
 write_prism_directives :-
-	% Make sure there is we have sdcg_start symbol
 	(not(clause(sdcg_start_definition(_),_)) -> throw(error(no_sdcg_start_symbol)) ; true),
-	sdcg_start_definition(Name/Arity),
-	ground(Name),
-	ground(Arity),
 	section('PRISM directives'),
 	writeq(target(failure,0)),dot,nl,
 	NotSuccess =.. [ not, (success) ],
 	Failure =.. [ :-, failure, NotSuccess ],
 	portray_clause(Failure),
+	write_prism_success,
+	writeq(data(user)),dot, nl.
+	
+write_prism_success :-
+	sdcg_option(use_append),
+	sdcg_start_definition_append(Name/Arity),
+	ground(Name), ground(Arity),
+	unifiable_list(Arity,L1),
+	StartCall =.. [ Name | L1 ],
+	Success =.. [ :-, success, StartCall ],
+	portray_clause(Success).
+	
+write_prism_success :-
+	% Make sure there is we have sdcg_start symbol
+	(not(clause(sdcg_start_definition(_),_)) -> throw(error(no_sdcg_start_symbol)) ; true),
+	sdcg_start_definition(Name/Arity),
+	ground(Name), ground(Arity),
+	writeq(target(failure,0)),dot,nl,
 	ExceptOutArity is Arity - 1,
 	(sdcg_option(parsetree) ->
 		ExceptParseTreeArity is ExceptOutArity - 1,
@@ -869,8 +974,7 @@ write_prism_directives :-
 	append(L2,PTF,L3),
 	StartCall =.. [ Name | L3 ],
 	Success =.. [ :-, success, StartCall ],
-	portray_clause(Success),
-	writeq(data(user)),dot, nl.
+	portray_clause(Success).
 
 write_sdcg_start_rule :-
 	section('Start symbol'),
@@ -880,7 +984,18 @@ write_sdcg_start_rule :-
 	unifiable_list(Arity,L),
 	Head =.. [ StartSymbol | L],
 	retractall(Head),
-	retractall(sdcg_start_definition(_)).
+	retractall(sdcg_start_definition(_)),
+	(sdcg_option(use_append) -> write_sdcg_start_rule_append; true).
+
+	
+write_sdcg_start_rule_append :-
+	sdcg_start_definition_append(StartSymbol/Arity),
+	portray_clause(sdcg_start_definition_append(StartSymbol/Arity)),
+	listing(StartSymbol/Arity),
+	unifiable_list(Arity,L),
+	Head =.. [ StartSymbol | L],
+	retractall(Head),
+	retractall(sdcg_start_definition_append(_)).
 
 write_rules([]).
 write_rules([Rule|Rest]) :-
@@ -920,6 +1035,17 @@ write_append :-
 	Clause2 =.. [ :-, Head2, Body2 ],
 	portray_clause(Clause1),
 	portray_clause(Clause2).
+	
+write_append_all :-
+	Head1 =.. [ append_all, [A,B], Out ],
+	Body1 =.. [ ap, A,B,Out ],
+	Rule1 =.. [ :-, Head1, Body1 ],
+	Head2 =.. [ append_all, [A,B|Rest], Out ],
+	Body2_1 =.. [ append, A, B, C ],
+	Body2_2 =.. [ append_all, [C|Rest], Out ],
+	Rule2 =.. [ :-, Head2, (Body2_1,Body2_2) ],
+	portray_clause(Rule1),
+	portray_clause(Rule2).
 	
 write_mysterious_all :-
 	Head =.. [ all, [A], cont(A,B) ],
