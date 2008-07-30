@@ -1,0 +1,9 @@
+Important stuff:
+priority 1:
+- Get the english grammar to load on the supercomputer.
+- Make a lex file from the Brown corpus. Estimate: 1 day.
+- Test that parsing with {} works!
+
+Later (but soon):
+- Load english grammar and brown corpus lex on supercomputer.
+- Lexicalize important parts

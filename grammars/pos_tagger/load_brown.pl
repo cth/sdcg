@@ -10,14 +10,17 @@
 % (except, the regex in the grammar creates an extra rule, so we need to double this)
 :- sdcg_set_option(maxdepth,22).
 
-:- sdcg_set_option(use_foc_cheat).
+%:- sdcg_set_option(use_foc_cheat).
+:- sdcg_set_option(use_append).
 %:- sdcg_set_option(check_generated_program).
 
 :- require('corpora/brown/wordlist.pl').
 :- require('corpora/brown/tagmap.pl').
 
-tag(X) :-
-	tagmap(_,X).
+%tag(X) :-
+%	tagmap(_,X).
+	
+tag(a).
 
 % Parse the english grammar:
 :- resolve_path('grammars/pos_tagger/grammar.pl',GrammarFile), sdcg_parse(GrammarFile).

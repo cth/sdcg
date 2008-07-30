@@ -14,15 +14,16 @@ start(TagList) ==>
 % Feature 1: The previous tag
 % Feature 2: The current tag
 % Feature 3: A list of tags encountered so far
-/*
-Won't train
-tag_word(Previous, @tag(Current), [Current|TagsRest]) | @tag(Previous) ==>
+% Won't train
+tag_word(Previous, @tag(Current), [Current|TagsRest]) | @tag(SomeTag) ==>
 	@consume_word(W),
 	?(tag_word(Current,_,TagsRest)).
-*/
+	
+/*
 tag_word(Previous, @tag(Current), [Current|TagsRest]) | @tag(SomeTag) ==>
 	@consume_word(W),
 	tag_word(Current,_,TagsRest).
 	
 tag_word(Previous, @tag(Current), [Current]) | @tag(SomeTag) ==>
 	@consume_word(W).
+	*/

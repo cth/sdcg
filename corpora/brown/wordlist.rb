@@ -8,5 +8,7 @@ File.open('focable.pl') do |file|
 end
 
 words.sort.uniq.each do |word|
+	next if word =~ /_/
+	next if word =~ /A/
 	puts "word(#{word})."
 end

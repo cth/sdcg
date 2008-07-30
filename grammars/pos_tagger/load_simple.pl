@@ -20,9 +20,12 @@
 train :-
 	learn([
 		start([det,noun,modalverb,verb],[the,can,will,rust],[]),
+		start([det,noun,modalverb,verb],[the,can,can,rust],[]),
+		start([det,noun,noun],[the,can,rust],[]),
 		start([det,noun],[the,rust],[]),
 		start([modalverb,noun,verb],[will,rust,rust],[]),
-		start([noun,modalverb,verb],[will,can,rust],[])
+		start([noun,modalverb,verb],[will,can,rust],[]),
+		start([noun,noun],[the,the],[])
 	]),
 	show_sw.
 	

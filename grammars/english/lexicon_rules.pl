@@ -9,7 +9,7 @@ expand_mode(lex(-,-,-)).
 expand_mode(lex(-,-,-,-)).
 expand_mode(lex(-,-,-,-,-)).
 expand_mode(lex(-,-,-,-,-,-)).
-expand_mode(lex(-,-,-,-,-,-,-)). 
+expand_mode(lex(-,-,-,-,-,-,-)).
 
 adjective(Word) ==>
 	{ lex(adjective,Word) },

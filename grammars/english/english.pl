@@ -1,11 +1,25 @@
-% A relatively wide coverage english grammar based on mainly Jurafsky chap 9.
-% Note to self: Check if @ expansion can expand to a list of Unification symbols
-
+% A relatively wide coverage english grammar originally based on mainly Jurafsky chap 9.
 start ==> sentence.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % s: Sentence types
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A sentence may end with a stop character like dot, but¨
+% we do not require it 
+sentence ==>
+	sentence, stop.
+
+% Simple, short sentences:
+% Sometimes sentences are just a single word or phrase. 
+% For instance the answer to a question, may be answered
+% quite briefly. "Who did it? Him."
+% Or a command being issued, "stop!".
+
+sentence ==> np(Number,Person,Gender).
+sentence ==> ap.
+sentence ==> adverb_p.
+sentence ==> qp(_).
 
 % Basic np vp sentences
 % Example: I prefer the morning flight
@@ -18,7 +32,50 @@ sentence ==>
 sentence ==>
 	vp(Number,Tense,Person).
 	
+sentence ==>
+	np(Number,Person,Gender),
+	sentence.
 	
+% On tuesday, it will happen.
+sentence ==>
+	pp(_countable,_number,_case),
+	comma,
+	sentence.
+
+sentence ==>
+	sentence,
+	colon,
+	sentence.
+
+% Conjuction of sentences:
+sentence ==>
+	sentence,
+	conjunction(_),
+	sentence.
+
+sentence ==>
+	adverb(_,_),
+	comma,
+	sentence.
+
+sentence ==>
+	sentence,
+	comma,
+	adverb(_,_).
+
+% Sentence with pre qualifiers
+% So I cooked some food.
+/*
+sentence ==>
+	qualifier(pre),
+	sentence.
+
+% Sentence with post qualifier
+% It is strange, indeed.
+sentence ==>
+	sentence,
+	qualifier(post).
+*/	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Question-like sentence constructions
 
@@ -29,7 +86,7 @@ sentence ==>
 % Should they decide how we proceed.
 sentence ==>
 	modal(Stem),
-	np(Number,Person,Gender),
+	np(Number,Person,Case),
 	vp(Number,Tense,Person).
 
 % s --> aux_verb, np, vp.
@@ -37,15 +94,15 @@ sentence ==>
 % do: VP in present tense -- Do they stop?
 % did: VP in present tense -- Did they think about it?
 sentence ==>
-	verb(VNumber,VTense,VPerson,to_do),
-	np(Number,Person,Gender),
+	verb(VNumber,VTense,VCase,VPerson,to_do),
+	np(Number,Person,Case),
 	vp(Number,present,Person).
 
 % have: VP in past tense --	Have any people come?, have you done it?
 % had: VP in past tense -- Had they thought about it?
 sentence ==>
-	verb(VNumber,VTense,VPerson,to_have),
-	np(Number,Person,Gender),
+	verb(VNumber,VTense,VCase,VPerson,to_have),
+	np(Number,Person,Case),
 	vp(Number,past,Person).
 
 % s --> wh, np, vp.
@@ -53,7 +110,7 @@ sentence ==>
 % Which flights serve breakfeast?
 sentence ==>
 	wh_determiner(Stem),
-	np(Number,Person,Gender),
+	np(Number,Person,Case),
 	vp(Number,Tense,Person).
 
 % s --> wh,np,verb('to do'/'to have'),np,vp
@@ -63,54 +120,27 @@ sentence ==>
 % *How do you do?
 sentence ==>
 	wh_determiner(Stem),
-	np(Number1,Person1,NPGender1),
-	verb(Number,VTense,Person1,to_do),
-	np(NPNumber2,NPPerson2,NPGender2),
+	np(Number1,Person1,NPCase1),
+	%verb(Number,VTense,Person1,VCase,to_do),
+	verb(Number,VTense,Person1,VCase,_), 
+	np(NPNumber2,NPPerson2,NPCase2),
 	vp(VPNumber,present,VPPerson). % is always in present tense
-/*
-	% We do explicit agreement for this one, as it is a bit complicated.
-	{
-		% If NP is pronoun like 'he' (sing,2nd person) then the verb 'to be' must be 'does' (sing,2nd person).
-		VNumber == NPNumber1,
-		VPerson == NPPerson1
-	}.
-*/
 
 % Which editor have you used
 sentence ==>
 	wh_determiner(Stem),
-	np(Number1,Person1,NPGender1),
-	verb(Number1,VTense,Person1,to_do),
+	np(Number1,Person1,NPCase1),
+	%verb(Number1,VTense,Person1,VCase,to_do),
+	verb(Number1,VTense,Person1,VCase,_),	
 	% aux(Num2), % _^ 
-	np(NPNumber2,NPPerson2,NPGender2),
+	np(NPNumber2,NPPerson2,NPCase2),
 	vp(VPNumber,past,VPPerson). % is always past tense
-
-/*
-	% We do explicit agreement for this one, as it is a bit complicated.
-	{
-		% If NP is pronoun like 'he' (sing,2nd person) then the verb 'to have' must be 'has' (sing,2nd person).
-		VNumber == NPNumber1,
-		VPerson == NPPerson1
-	}.
-*/
 
 % A very simple account of fronting:
 % On the table.
 sentence ==>
-	pp(PPCountable,PPNumber,PPGender).
-
-% On tuesday, it will happen.
-sentence ==>
-	pp(PPCountable,PPNumber,PPGender),
-	comma(_),
-	sentence.
-
-% Conjuction of sentences:
-sentence ==>
-	sentence,
-	conjunction(Stem),
-	sentence.
-
+	pp(_countable,_number,_case).
+	
 %s ==> start_enclose, s, end_enclose.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,24 +151,23 @@ sentence ==>
 % vp --> verb.
 % It [sucks].
 vp(Number,Tense,Person) ==>
-	verb(Number,Tense,Person,Stem).
-
+	verb(Number,Tense,Person,VCase,Stem).
 % vp --> modal, verb.
 % It will happen.
 vp(Number,Tense,Person) ==>
 	modal(ModalStem),
 	vp(Number,Tense,Person).
-
+	
 % vp --> verb, np.
 % Number between the verb and np doesn't have to agree, but the vp takes it's number from the verb. This also goes for tense and person.
 % Examples:
 % Prefer a morning flight.
 % Help yourself.
 vp(VNumber,VTense,VPerson) ==>
-	verb(VNumber,VTense,VPerson,VStem),
+	verb(VNumber,VTense,VPerson,VCase,VStem),
 	np(NPPerson,NPNumber,objective).
 vp(VNumber,VTense,VPerson) ==>
-	verb(VNumber,VTense,VPerson,VStem),
+	verb(VNumber,VTense,VPerson,VCase,VStem),
 	np(NPPerson,NPNumber,reflexive).
 	
 % vp --> verb, np, pp.
@@ -146,15 +175,15 @@ vp(VNumber,VTense,VPerson) ==>
 % Leave boston in the morning
 % Read books on natural language in the evenings.
 vp(VNumber,VTense,VPerson) ==>
-	verb(VNumber,VTense,VPerson,VStem),
+	verb(VNumber,VTense,VPerson,VCase,VStem),
 	np(NPPerson,NPNumber,NPCase),
-	pp(PPCountable,PPNumber,PPGender).
+	pp(PPCountable,PPNumber,PPCase).
 
 % vp --> verb,pp.
 % work on thursday
 vp(VNumber,VTense,VPerson) ==>
-	verb(VNumber,VTense,VPerson,VStem),
-	pp(PPCountable,PPNumber,PPGender).
+	verb(VNumber,VTense,VPerson,VCase,VStem),
+	pp(PPCountable,PPNumber,PPCase).
 
 % vp --> vp,conjunction,vp.
 % Examples:
@@ -173,7 +202,7 @@ vp(Number,Tense1,Person) ==>
 	vp(Number,Tense2,Person).
 vp(Number,Tense2,Person) ==>
 	vp(Number,Tense1,Person),
-	conjunction(Stem),
+	conjunction(_),
 	vp(Number,Tense2,Person).
 	
 % vp --> verb("to be" or to "have")
@@ -182,7 +211,7 @@ vp(Number,Tense2,Person) ==>
 % were modernizing
 % -- There might be a problem with infinitive forms of "to be". Depends on how I decide to represent infinitives.
 vp(Number,Tense,Person) ==>
-	verb(Number,Tense,Person,to_be),
+	verb(Number,Tense,Person,VCase,to_be),
 	gerund_vp.
 
 % vp --> verb('to be'),verb('to have'), gerund_vp
@@ -190,8 +219,8 @@ vp(Number,Tense,Person) ==>
 % had been modernizing: Tense is "past perfect"
 % *had modernizing
 vp(Number,Tense,Person) ==>
-	verb(Number,Tense,Person,to_have),
-	verb(Number1,past-participle,Person,to_be), % been
+	verb(Number,Tense,Person,VCase,to_have),
+	verb(Number1,past,Person,particple,to_be), % been
 	gerund_vp.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -220,41 +249,97 @@ gerund_vp ==>
 % - Number: sing/plur
 % - Person: first,second,third
 % - Case: 
+%	- We really only care if np's can occur in subject or object position
 %  
 % Questions to self: Should np have person? - yes, since they can contain pronouns
 % Then, can we assume all common are third person? - They are in brown, so yes.
 
 % np ==> (det) (card) (ord) (quant) (AP) Nominal
+	
+% Pronoun nominal
+%np(Number,Person,Case) ==> 
+%	pronoun(Number,Person,Case,Gender,_).
 
+% reflexive should occur in subject only
+np(Number,Person,subjective) ==>
+	pronoun(Number,Person,reflexive,_gender,_).
+np(Number,Person,subjective) ==>
+	pronoun(Number,Person,subjective,_gender,_).
+
+% Her mood	
+% His third try
+np(Number,Person,@subj_obj(Case)) ==>
+	pronoun(_number,_person,possesive-determiner,_gender,_whatever),
+	nominal(Person,Number,_case).
+np(Number,Person,@subj_obj(Case)) ==>
+	pronoun(_number,_person,possesive-determiner,_gender,_whatever),
+	qp(Number),
+	nominal(Person,Number,_case).	
+	
 % np --> nominal
 % Many nouns doesn't require a determiner: 
 % Mass nouns (snow,dinner,water etc.)
 % Plural nouns:  bunnies are funny.
 % Singular nouns is not so easy: *bunny is funny (This is like baby talk)
 % We can probably, make a rule for this in the grammar corrector
-np(Number,third,Case) ==>
-	nominal(Person,Number,Case).
-
 % np --> det, nominal
-np(Number,Person,Gender) ==>
+% The car
+% The two cars
+np(Number,Person,@subj_obj(Case)) ==>
+	nominal(Person,Number,uninflicted).
+	
+np(Number,Person,@subj_obj(Case)) ==>
 	det(Number,_),
-	nominal(Person,Number,Gender).
-
-% np--> det,qp,nominal
-% Noun phrase with quantifiers
-% the two booksnominal(Countable,Number,Gender)
-np(Number,Person,Gender) ==>
-	det(Number,_),
+	nominal(Person,Number,uninflicted).
+	
+np(Number,Person,@subj_obj(Case)) ==>
 	qp(Number),
-	nominal(Person,Number,Gender).
+	nominal(Person,Number,uninflicted).
+	
+np(Number,Person,@subj_obj(Case)) ==>
+	det(Number,_),
+	qp(Number),	
+	nominal(Person,Number,uninflicted).	
 
-% np --> pronoun
-% Singleton pronouns:
-% he
-% Mr Wilson
-np(Number,Person,Gender) ==> 
-	pronoun(Number,Person,Case,Gender,_).
+% The coach's decision
+/*
+np(Number,Person,@subj_obj(Case)) ==>
+	?(det(Number1,_)),
+	?(qp(Number1)),
+	nominal(_person,Number1,genitive),
+	np(Number),
+	% No article may follow this
+	nominal(Person,Number,uninflicted).
+*/
+np(Number,Person,@subj_obj(Case)) ==>
+	nominal(_person,Number1,genitive),
+	% No article may follow this
+	nominal(Person,Number,uninflicted).
+np(Number,Person,@subj_obj(Case)) ==>
+	det(Number1,_),
+	nominal(_person,Number1,genitive),
+	% No article may follow this
+	nominal(Person,Number,uninflicted).
+np(Number,Person,@subj_obj(Case)) ==>
+	qp(Number1),
+	nominal(_person,Number1,genitive),
+	% No article may follow this
+	nominal(Person,Number,uninflicted).
+np(Number,Person,@subj_obj(Case)) ==>
+	det(Number1,_),
+	qp(Number1),
+	nominal(_person,Number1,genitive),
+	% No article may follow this
+	nominal(Person,Number,uninflicted).			
 
+% Compound nouns
+% The hotel owner
+% The hotels owner
+np(Number,third,Case) ==>
+	np(_number,third,_case), 
+	nominal(Person,Number,Case).
+	
+%%% NP conjunctions %%%% 
 % np --> np, conjunction, np.
 % Conjoined noun-phrases. The are always plural.
 % Men and boys	 : Good question.. Should gender be masc?
@@ -266,26 +351,179 @@ np(Number,Person,Gender) ==>
 % *he and she
 % *we and they
 % --> must be third person
-np(plur,Person,neut) ==>
+np(plur,Person,@subj_obj(Case)) ==>
 	np(Number1,third,Gender1),
-	conjunction(CStem),
+	conjunction(_),
 	np(Number2,third,Gender2).
 
+% Austin, Texas.
+np(plur,Person,@subj_obj(Case)) ==>
+	np(Number1,Person1,Gender1),
+	comma,
+	np(Number2,Person1,Gender2).
+	
 % np --> ap, nominal.
 % Adjective phrase and nominal.
 % Ex: 
 % Red carpet.
 % Small, brown, nosy mouse.
-np(Countable,Number,Person,Gender) ==>
+% long, curly har
+/*
+np(Number,third,Case) ==>
 	ap,
-	nominal(Countable,Person,Number,Gender).
+	nominal(Countable,Number,Case).
 	
 % np --> det, ap, nominal
 % The pretty girl
-np(Countable,Number,Person,Gender) ==>
+np(Number,third,Case) ==>
 	det(Number,_),
 	ap,
-	nominal(Countable,Person,Number,Gender).
+	nominal(Countable,Number,Case).
+	
+% Underlying problem
+np(Number,third,Case) ==>
+	adverb_p,
+	nominal(Countable,Number,Case).
+
+% The underlying problem
+np(Number,third,Case) ==>
+	det(Number,_),
+	nominal(Countable,Number,Case).
+*/
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Nominals
+% Features (in order):
+% Tree: The parse tree built
+% Countable: countable/mass.
+% Number: sing/plur
+% Gender: masc/fem/neut
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% A note for the person feature. Nominals never include pronouns
+% so person is always 3rd. For this reason, this feature is
+% omitted.
+
+/* 
+Next four rules can be implemented with this but regex dont work with append
+nominal(Countable,Number,Case) ==>
+	?(adverb_p),
+	?(ap),
+	nominal(Countable,Number,Case).
+*/
+
+% Underlying problem
+% Surprisingly calm exterior	
+nominal(Countable,Number,Case) ==>
+	adverb_p,
+	nominal(Countable,Number,Case).
+	
+nominal(Countable,Number,Case) ==>
+	ap,
+	nominal(Countable,Number,Case).
+	
+nominal(Countable,Number,Case) ==>
+	adverb_p,
+	ap,
+	nominal(Countable,Number,Case).
+
+% nominal --> noun 
+% The simplest type: Just a noun.
+nominal(Countable,Number,Case) ==>
+	noun(Countable,Number,Case,_).
+	
+nominal(Countable,Number,Case) ==>
+	propernoun(Countable,Number,Case,_).
+
+% nominal --> noun, nominal
+% Compound nominals. 
+% The compound nominal takes features from the last noun.
+% Examples:
+% city airport.
+% company policy.
+% water snakes.
+% Syntax error.
+% peoples' right. (i think these should be in a different "possive nominal rule")
+% employees' right.
+% Not sure about number agreement here. For instance "the executives" Probably search brown for to nouns in a row. It seems though
+% that it goes: [sing,sing] or [sing,plur] 
+nominal(Countable2,Number2,uninflicted) ==>
+	noun(Countable1,Number1,Case,Stem1),
+	nominal(Countable2,Number2,uninflicted).
+	
+nominal(Countable2,Number2,uninflicted) ==>
+	propernoun(Countable1,Number1,Case,Stem1),
+	nominal(Countable2,Number2,uninflicted).	
+
+%% Some nouns have post-modifiers:
+% Nominal with preposition postmodifier:
+% Ex: the weather in April
+% I am not sure about agreement for this one? Seems everything is ok.
+% Cows in the staple
+% Cows in the staple
+% Cow in the boxes.
+% Smoke on the water (mass nouns)
+% Water in the pipe.
+nominal(Countable1,Number1,Case) ==>
+	nominal(Countable1,Number1,uninflicted),
+	pp(Countable2,Number2,uninflicted).
+	% Leave agreement for later.
+	
+% Nominal with gerundive postmodifier.
+% tree cutting
+% computer programming
+% This should not be allowed with pronouns!!!
+nominal(Countable, Number,uninflicted) ==>
+	nominal(Countable,Number,uninflicted),
+	gerund_vp.
+
+% nominal --> nominal, relative_clause
+% Nominals occuring with relative clauses:
+% The boy who sings.
+nominal(Countable,Number,uninflicted) ==>
+	nominal(Countable,Number,uninflicted),
+	relative_clause(Number,_Person,_Tense).
+	
+%nominal(Countable,Number,Gender) ==>
+%	adverb_p,
+%	nominal(Countable,Number,Gender).	
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Relative clauses
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% We need some gap-list like functionality here to handled multiple
+% relative clause like: The man who likes the women who liked him.
+
+% It's difficult to figure out agreement, consider these sentences:
+% The boy who loves the girl.
+% The boy whom the girl loves.
+% We could have different rules for this, but Brown doesn't distiguish who/whom tagwise..
+
+% The man [who sings].
+% The man [who sing].
+% The man [who sang].
+% The thing [that works].
+relative_clause(Number,Person,Tense) ==>
+	% We should match gender, but brown corpus makes it impossible
+	relative_pronoun(accusative,_Gender,Stem), % that,who etc.
+	vp(Number,Tense,Person).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% pp: Prepositional phrase
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Where are you from.
+pp(Countable,Number,Case) ==>
+	preposition(_).
+
+% from Los Angeles
+pp(Countable,Number,Case) ==>
+	preposition(_),
+	nominal(Countable,Number,Case).
+	
+% Note:
+% We don't need extra rules to cover longer prepositional phrases like
+% The girl in the red dress from the train to copenhagen from yesterday. (nevermind that is hopelessly ambiguous).
+% since we already have: nominal ==> nominal, pp. and they are mutually recursive.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % qp: Combinations of quantifiers, cardinals and nomimals
@@ -303,6 +541,10 @@ qp(Number) ==>
 qp(Number) ==>
 	qp(Number),
 	qp(Number).
+	
+% Above rule can be expressed as
+%qp(Number) ==>
+%	*(qp(Number)),
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ap: Adjective phrases
@@ -315,109 +557,36 @@ ap ==> adjective(_).
 
 ap ==>
 	adjective(_),
-	comma(_),
+	comma,
 	adjective(_).
 
 ap ==>
 	adjective(_),
-	comma(_),
-	ap(_).
+	comma,
+	ap.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Nominals
-% Features (in order):
-% Tree: The parse tree built
-% Countable: countable/mass.
-% Number: sing/plur
-% Gender: masc/fem/neut
+% Adverb phrases
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% A note for the person feature. Nominals never include pronouns
-% so person is always 3rd. For this reason, this feature is
-% omitted.
+% Not really properly done yet
 
-% nominal --> noun 
-% The simplest type: Just a noun.
-nominal(Countable,Number,Gender) ==>
-	noun(Countable,Number,Gender,_).
-
-% nominal --> noun, nominal
-% Compound nominals. 
-% The compound nominal takes features from the last noun.
-% Examples:
-% city airport.
-% company policy.
-% water snakes.
-% Syntax error.
-% peoples' right. (i think these should be in a different "possive nominal rule")
-% employees' right.
-% Not sure about number agreement here. For instance "the executives" Probably search brown for to nouns in a row. It seems though
-% that it goes: [sing,sing] or [sing,plur] 
-nominal(Countable2,Number2,Gender2) ==>
-	noun(Countable1,Number1,Gender1,Stem1),
-	nominal(Countable2,Number2,Gender2).
-
-%% Some nouns have post-modifiers:
-% Nominal with preposition postmodifier:
-% Ex: the weather in April
-% I am not sure about agreement for this one? Seems everything is ok.
-% Cows in the staple
-% Cows in the staple
-% Cow in the boxes.
-% Smoke on the water (mass nouns)
-% Water in the pipe.
-nominal(Countable1,Number1,Gender1) ==>
-	nominal(Countable1,Number1,Gender1),
-	pp(PPTree,Countable2,Number2,Gender2).
-	% Leave agreement for later.
+adverb_p ==>
+	adverb(_,_).
 	
-% Nominal with gerundive postmodifier.
-% tree cutting
-% computer programming
-% This should not be allowed with pronouns!!!
-nominal(Countable, Number, Gender) ==>
-	nominal(Countable,Number,Gender),
-	gerund_vp(VPTree).
+% Repeated conjunctions of adverb phrases
+% Surprisingly and 
+adverb_p ==>
+	adverb_p,
+	conjunction(_),
+	adverb_p.
 
-% nominal --> nominal, relative_clause
-% Nominals occuring with relative clauses:
-% The boy who sings.
-nominal(Countable,Number,Gender) ==>
-	nominal(Countable,Number,Gender),
-	relative_clause(Number,Gender,_Person,_Tense). % FIXME
+adverb_p ==>
+	adverb_p,
+	comma,
+	adverb_p.
 	
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Relative clauses
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% We need some gap-list like functionality here to handled multiple
-% relative clause like: The man who likes the women who liked him.
 
-% It's difficult to figure out agreement, consider these sentences:
-% The boy who loves the girl.
-% The boy whom the girl loves.
-% We could have different rules for this, but Brown doesn't distiguish who/whom tagwise..
-
-% The man [who sings].
-% The man [who sing].
-% The man [who sang].
-% The thing [that works].
-relative_clause(Number,Gender,Person,Tense) ==>
-	relative_pronoun(accusative,Gender,Stem), % that,who etc.
-	vp(Number,Tense,Person).
-	
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% pp: Prepositional phrase
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Where are you from.
-pp(Countable,Number,Gender) ==>
-	preposition(_).
-
-% from Los Angeles
-pp(Countable,Number,Gender) ==>
-	preposition(_),
-	nominal(Countable,Number,Gender).
-	
-% Note:
-% We don't need extra rules to cover longer prepositional phrases like
-% The girl in the red dress from the train to copenhagen from yesterday. (nevermind that is hopelessly ambiguous).
-% since we already have: nominal ==> nominal, pp. and they are mutually recursive.
+% Most likely
+adverb_p ==>
+	quantifier(_,_), 
+	adverb_p.

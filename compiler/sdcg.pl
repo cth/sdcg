@@ -12,6 +12,7 @@
 
 :- dynamic sdcg_user_option/2.
 :- dynamic sdcg_start_definition/1.
+:- dynamic sdcg_start_definition_append/1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SDCG Options
@@ -23,10 +24,11 @@ sdcg_default_option(parsetree, false).
 sdcg_default_option(parsetree_include_difflists,false).
 sdcg_default_option(prism_file, 'generated_sdcg.psm').
 sdcg_default_option(prism_invoker, prismn). % Use prismn (with FOC/FAM as default)
-sdcg_default_option(use_foc_cheat,false).
+sdcg_default_option(use_foc_cheat,true).
 sdcg_default_option(debug,false).
 sdcg_default_option(check_generated_program,false).
 sdcg_default_option(use_append,false).
+sdcg_default_option(postload_verification_check,false).
 
 sdcg_option(Opt, Val) :-
 	(clause(sdcg_user_option(Opt,_),_) ->
@@ -51,7 +53,9 @@ sdcg_unset_option(Opt) :-
 	retractall(sdcg_user_option(Opt,_)).
 	
 sdcg_boolean_option(X) :-
-	sdcg_default_option(X,false) ; sdcg_default_option(X,true).
+	sdcg_default_option(X,false)
+	;
+	sdcg_default_option(X,true).
 	
 sdcg_positive_integer_option(X) :-
 	sdcg_default_option(X,Y),
@@ -155,7 +159,7 @@ rewrite_start_rule_append(LHS,RHS) :-
 	sdcg_option(start_symbol,StartSymbol),
 	LHS =.. [ StartSymbol | Features ],
 	atom_concat(append_, StartSymbol,NewStartSymbol),
-	rewrite_append_rule_rhs(RHS,NewRHS,Input),
+	rewrite_append_rule_rhs(RHS,0,NewRHS,Input),
 	append(Features,[Input],NewFeatures),
 	NewLHS =.. [ NewStartSymbol | NewFeatures ],
 	StartRule =.. [ :-, NewLHS, NewRHS ],
@@ -187,7 +191,7 @@ rewrite_rule(LHS,RHSL) :-
 
 % Rewrite rules without conditioning patterns
 rewrite_rule(LHS,RHS) :-
-	sdcg_debug((write('rewrite_rule (regular append rule)'),nl)),
+	sdcg_debug((write('rewrite_rule (regular rule)'),nl)),
 	LHS =.. [ Name | Features],
 	functor(LHS,_,Arity),
 	% Expand values(Rulename, ...) to include this new nonterminal and give it a unique new name:
@@ -198,14 +202,14 @@ rewrite_rule(LHS,RHS) :-
 	sdcg_debug((write('Selector Rule: '),nl, portray_clause(SelectorRule))),
 	% Create Implementation rule
 	create_implementation_rule(ImplRuleName,Name,Features,RHS,ImplRule),
-	write('Done creating implementation rule:'), write(ImplRule), nl,
+	%write('Done creating implementation rule:'), write(ImplRule), nl,
 	expand_asserted_set(sdcg_implementation_rules, ImplRule),
 	sdcg_debug((write('Implementation Rule: '),nl, portray_clause(ImplRule))),
 	(sdcg_option(use_append) ->
-		atom_concat(append_, ImplRuleName,AppImplRuleName),
+		%atom_concat(append_, ImplRuleName,AppImplRuleName),
 		create_selector_rule_append(Name,Arity,AppSelectorRule),
 		expand_asserted_set(sdcg_selector_rules,AppSelectorRule),
-		create_implementation_rule_append(ImplRuleName,Features,RHS,AppImplRule),
+		create_implementation_rule_append(ImplRuleName,Name,Features,RHS,AppImplRule),
 		expand_asserted_set(sdcg_implementation_rules,AppImplRule)
 		; 
 		true
@@ -221,7 +225,8 @@ create_selector_rule(Name,Arity,SelectorRule) :-
 	append(FeatureStub,[_In,_Out], HeadParams),
 	append(FeatureStub,[_In,_Out], BodyParams),
 	%generate_selector(BodyParams,SwitchVar,Values,RHS2),
-	Selector =.. [ sdcg_rule | [SwitchVar|BodyParams] ],
+	impl_rule_name(Name,ImplRuleName),
+	Selector =.. [ ImplRuleName | [SwitchVar|BodyParams] ],
 	RHS = (Switch,Selector),
 	LHS =.. [ Name | HeadParams ],
 	SelectorRule1 =.. [ :-, LHS, RHS ],
@@ -241,16 +246,23 @@ create_selector_rule(Name,Arity,SelectorRule) :-
 	
 % Create the append version of the selector rule
 create_selector_rule_append(Name,Arity,SelectorRule) :-
-	atom_concat(append_,Name,AppName),
+	atom_concat(Name,'_append',AppName),
 	unifiable_list(Arity,FeatureStub),
 	MSW =.. [ Name, Arity ],
 	Switch =.. [ msw, MSW, SwitchVar ],
 	append(FeatureStub,[Output], HeadParams),
 	append(FeatureStub,[Output], BodyParams),
-	Selector =.. [ sdcg_append_rule | [SwitchVar|BodyParams] ],
+	impl_rule_name_append(Name,ImplRuleName),
+	Selector =.. [ ImplRuleName | [SwitchVar|BodyParams] ],
 	RHS = (Switch,Selector),
 	LHS =.. [ AppName | HeadParams ],
-	SelectorRule =.. [ :-, LHS, RHS ].
+	SelectorRule1 =.. [ :-, LHS, RHS ],
+	sdcg_option(maxdepth, MaxDepth),
+	((MaxDepth == 0) ->
+		SelectorRule = SelectorRule1
+		;
+		add_selector_depth_check(SelectorRule1,SelectorRule)
+	).
 
 create_condition_rule(Name,Arity,Conditions,ConditionRule,ConditionedSelectorName) :-
 	% Create an unique identifier for selector rule for these conditions by expanding
@@ -259,11 +271,11 @@ create_condition_rule(Name,Arity,Conditions,ConditionRule,ConditionedSelectorNam
 	PreCheckSetExpand =.. [ ConditionListIdentifier | [AllConditionsPre] ],
 	sdcg_debug((nl,write('PreCheckSetExpand: '), write(PreCheckSetExpand),nl)),
 	catch(call(PreCheckSetExpand),_,AllConditionsPre=[]),
-	% Is the condition rule allready created?
 	sdcg_debug(
 		(write('ConditionListIdentifier: '),write(ConditionListIdentifier),nl,
 		write('AllConditionPre: '),write(AllConditionsPre),nl)
 	),
+	% Is the condition rule allready created?
 	(member(Conditions,AllConditionsPre) ->
 		ConditionRule = [],
 		nth(Index,AllConditionsPre,Conditions),
@@ -320,6 +332,21 @@ resolve_conditioning_params([+|CMRest],[Param|ParamRest],[Param|CondParamRest]) 
 	resolve_conditioning_params(CMRest,ParamRest,CondParamRest).
 resolve_conditioning_params([-|CMRest],[_|ParamRest],CondParamRest) :-
 	resolve_conditioning_params(CMRest,ParamRest,CondParamRest).
+		
+impl_rule_name(OrigName,DerivedName) :-
+	(atom(OrigName) ; atom(DerivedName)),
+	atom_concat(OrigName,'_impl',DerivedName).
+	
+impl_rule_name_append(OrigName,DerivedName) :-
+	atom(OrigName),
+	impl_rule_name(OrigName,ImplRuleNameNormally),
+	atom_concat(ImplRuleNameNormally,'_append',DerivedName).
+
+impl_rule_name_append(OrigName,DerivedName) :-
+	atom(DerivedName),
+	atom_concat(ImplRuleNameNormally,'_append',DerivedName),
+	impl_rule_name(OrigName,ImplRuleNameNormally).
+
 
 % Generate the implementation rule, by adding difference-lists and other
 % requested features. 
@@ -328,7 +355,7 @@ resolve_conditioning_params([-|CMRest],[_|ParamRest],CondParamRest) :-
 % RHS(in) : A list containing the constituents of the rule
 % ImplRule(out) : The rewritten implementation rule.
 create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule) :-
-	write(create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule)),nl,
+	sdcg_debug((write(create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule)),nl)),
 	append(Features,[In,Out],Features1),
 	(sdcg_option(parsetree) ->
 		(sdcg_option(parsetree_include_difflists) -> 
@@ -341,7 +368,8 @@ create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule) :-
 		Features2 = Features1
 	),
 	(sdcg_option(maxdepth,0) ->	Features3 = Features2 ; append(Features2,[Depth],Features3)),
-	LHS =.. [ sdcg_rule | [ Name | Features3 ]],
+	impl_rule_name(SelectorName,ImplRuleName),
+	LHS =.. [ ImplRuleName | [ Name | Features3 ]],
 	(RHS == [[]] ->
 		% In the case of an empty rule, the Out list should be the same as the in list.
 		OutIsIn =..[=,Out,In],
@@ -361,17 +389,19 @@ create_implementation_rule(Name,SelectorName,Features,RHS,ImplRule) :-
 	
 	
 % Generate and implementation rule for the append version of the PRISM program
-create_implementation_rule_append(Name,Features,RHS,ImplRule) :-
+create_implementation_rule_append(Name,SelectorName,Features,RHS,ImplRule) :-
 	sdcg_debug((write(create_implementation_rule_append(Name,Features,RHS,ImplRule)),nl)),
 	(RHS == [[]] ->
 		append(Features,[],Features1),
 		ImplRuleRHS = true,
 		Output = [[]]
 	;
-		rewrite_append_rule_rhs(RHS,ImplRuleRHS,Output)
+		rewrite_append_rule_rhs(RHS,Depth,ImplRuleRHS,Output)
 	),
 	append(Features,[Output],Features1),
-	LHS =.. [ sdcg_append_rule | [ Name | Features1 ]],
+	(sdcg_option(maxdepth,0) ->	Features2 = Features1 ; append(Features1,[Depth],Features2)),
+	impl_rule_name_append(SelectorName,ImplRuleName),
+	LHS =.. [ ImplRuleName | [ Name | Features2 ]],
 	ImplRule =.. [ :-, LHS, ImplRuleRHS ].
 
 % rewrite_rule_rhs goes through constituents of a rule and rewrites each of them.
@@ -389,9 +419,9 @@ rewrite_rule_rhs(In, Out, Depth, [R], ParseTreeFeature, Body) :-
 		generate_consumes(In,Out,R,Body),
 		ParseTreeFeature = [[]]
 	;is_composed(R) ->
-		write('composed rules encountered: '), write(R),nl
+		sdcg_debug((write('composed rules encountered: '), write(R),nl))
 	;is_code_block(R) ->
-		write('code block encountered'), write(R),nl,
+		sdcg_debug((write('code block encountered'), write(R),nl)),
 		R =.. [{},Body], In = Out
 	;
 		% Add difference lists:
@@ -419,32 +449,34 @@ rewrite_rule_rhs(In, Out,Depth, [R | RHS], [ParseTree|ParseTreesRest], Body) :-
 	rewrite_rule_rhs(NextIn,Out,Depth,RHS,ParseTreesRest,ClausesRest),
 	Body = (Clause, (ClausesRest)).
 	
-rewrite_append_rule_rhs1([[]],true,[]).
-rewrite_append_rule_rhs1([R],true,R) :-
+rewrite_append_rule_rhs1([[]],_,true,[]).
+rewrite_append_rule_rhs1([R],_,true,R) :-
 	is_list(R).
-rewrite_append_rule_rhs1([R],Body,[]) :- 
+rewrite_append_rule_rhs1([R],_,Body,[]) :-
 	is_code_block(R),
 	R =.. [{},Body].
-rewrite_append_rule_rhs1([R],Body,[App]) :-
+rewrite_append_rule_rhs1([R],Depth,Body,[App]) :-
 	R =.. [Name|Features],
 	append(Features,[App],Features1),
-	atom_concat(append_,Name,AppName),
-	Body =.. [AppName | Features1].
-rewrite_append_rule_rhs1([R|RHS],Body,App) :-
-	rewrite_append_rule_rhs1([R],Clause,App1),!,
-	rewrite_append_rule_rhs1(RHS,ClausesRest,AppRest),
+	(sdcg_option(maxdepth,0) ->	Features2 = Features1 ; append(Features1,[Depth],Features2)),
+%	atom_concat(append_,Name,AppName),
+	atom_concat(Name,'_append',AppName),
+	Body =.. [AppName | Features2].
+rewrite_append_rule_rhs1([R|RHS],Depth,Body,App) :-
+	rewrite_append_rule_rhs1([R],Depth,Clause,App1),!,
+	rewrite_append_rule_rhs1(RHS,Depth,ClausesRest,AppRest),
 	Body = (Clause, (ClausesRest)),
 	append(App1,AppRest,App).
 
-rewrite_append_rule_rhs([R],Body,Output) :-
-	rewrite_append_rule_rhs1([R],Body,[Output]).
-rewrite_append_rule_rhs([R|RHS],Body,Output) :-
-	rewrite_append_rule_rhs1([R|RHS],Constituents,AppAll),
+rewrite_append_rule_rhs([R],Depth,Body,Output) :-
+	rewrite_append_rule_rhs1([R],Depth,Body,[Output]).
+rewrite_append_rule_rhs([R|RHS],Depth,Body,Output) :-
+	rewrite_append_rule_rhs1([R|RHS],Depth,Constituents,AppAll),
 	remove_empty(AppAll,App),
 	clause_to_list(Constituents,ConstList),
-	write(Constituents),nl,
+	%write(Constituents),nl,
 	delete(true,ConstList,ReducedConstituentsList),
-	write(ReducedConstituentsList),nl,
+	%write(ReducedConstituentsList),nl,
 	list_to_clause(ReducedConstituentsList,ReducedConstituents),
 	AppendRule1 =.. [ append_all, App, Output ],
 	Body = (ReducedConstituents,AppendRule1).
@@ -467,10 +499,12 @@ add_lhs_feature(LHS,NewLHS,Feature) :-
 	append(LHSArgs,[Feature],NewLHSArgs),
 	NewLHS =.. [ Rulename | NewLHSArgs ].
 
+% Conditionally add features to constitutents if RHS of rule,
+% based on the name of the constituent
 add_rhs_feature([],[],_,_).
 add_rhs_feature([Constituent|ConstRest],[NewConstituent|NewConstRest],Feature,Condition) :-
 	Constituent =.. [ Functor | ArgList ],
-	% If condition is something like : check/0 then check(Functor) will be called
+	% If condition is check then check(Functor) will be called
 	(call(Condition,Functor) ->
 		append(ArgList,[Feature],NewArgList),
 		NewConstituent =.. [ Functor | NewArgList ]
@@ -490,8 +524,15 @@ add_rhs_feature([Constituent|ConstRest],[NewConstituent|NewConstRest],Feature,Co
 % compiler. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-selector_rhs_depth_feature_condition(sdcg_rule).
-selector_parsetree_condition(sdcg_rule).
+%selector_rhs_depth_feature_condition(sdcg_rule).
+%selector_rhs_depth_feature_condition(sdcg_append_rule).
+selector_rhs_depth_feature_condition(Name) :-
+	impl_rule_name(_,Name).
+selector_rhs_depth_feature_condition(Name) :-
+	impl_rule_name_append(_,Name).
+
+selector_parsetree_condition(Name) :-
+	impl_rule_name(_,Name).
 
 impl_rule_depth_feature_condition(ConstituentFunctor) :-
 	ConstituentFunctor \== {}, % Code block, skip
@@ -522,10 +563,19 @@ add_selector_parsetree(SelectorRule,ModifiedRule) :-
 create_incr_depth(Rule) :-
 	Head =.. [ incr_depth, Depth, NewDepth ],
 	sdcg_option(maxdepth,Max),
-	Body = (NewDepth is Depth+1, (NewDepth<Max)),
-	%Body = ((integer(Depth), (NewDepth is Depth+1, (NewDepth<Max)))),	
+	Body = (sdcg_integer(Depth),(sdcg_integer(NewDepth),(NewDepth is Depth+1, (NewDepth<Max)))),
+	%Body = ((integer(Depth), (NewDepth is Depth+1, (NewDepth<Max)))),
 	Rule =.. [ :-, Head, Body ].
-	
+
+create_integer_range(End,End) :-
+	portray_clause(sdcg_integer(End)).
+create_integer_range(Start,End) :-
+	Start < End,
+	integer(Start),
+	portray_clause(sdcg_integer(Start)),
+	Next is Start + 1,
+	create_integer_range(Next,End).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Feature expansion
 % expands rules prefixed with @
@@ -546,9 +596,9 @@ expand_expanders(LHS,RHS,Rules) :-
 % Create a rule, the invocation of which results in combinations
 % of grammar rules based on the expansions in the original rule
 create_expansion_rule(LHS,RHS,ExpRule) :-
-	write('create_expansion_rule'),nl,
-	write('lhs: '), write(LHS), nl,
-	write('rhs: '),write(RHS), nl,
+	%write('create_expansion_rule'),nl,
+	%write('lhs: '), write(LHS), nl,
+	%write('rhs: '),write(RHS), nl,
 	% Extract LHS expanders:
 	(functor(LHS,'|',2) -> % Do we have conditions? They might need expansion too.
 		LHS =.. [ '|', Head, Conditions],
@@ -652,7 +702,7 @@ resolve_expand_mode(Expander, ModeList) :-
 	catch(expand_mode(ModeExpanderArg), _, fail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Constituent expansion
+% Regular expression expansion
 % This allows regular expression like operators prefixed
 % to the constituents, eg. s(X) --> *a(X), ?b(X), +c(Y).
 % ? : The constiuents can appear zero or one time.
@@ -663,9 +713,7 @@ resolve_expand_mode(Expander, ModeList) :-
 % Expand regex in the RHS of a rule, creating a new RHS and the rules
 % needed to implement the regular expressions encountered.
 regex_expansions(RHSL,NewRHSL,Rules) :-
-%	clause_to_list(RHS,RHSL),
 	regex_expand(RHSL,NewRHSL,AddedRules),
-%	list_to_clause(NewRHSL,NewRHS),
 	flatten(AddedRules,Rules).
 
 % Expand a list of constituents which may contain regex prefixed constituents
@@ -807,6 +855,13 @@ generate_prism_program :-
 	write('Done generating PRISM program'),nl.
 
 load_prism_program :-
+	% We need to check this option before loading prism,
+	% it will be private after we load
+	(sdcg_option(postload_verification_check) ->
+		Verify = true
+		;
+		Verify = false
+	),
 	section('FOC compilation'),
 	sdcg_option(prism_file, OutFile),
 	sdcg_debug(fo_trace),
@@ -814,7 +869,7 @@ load_prism_program :-
 	InvokePRISM =.. [ PI, OutFile ],
 	call(InvokePRISM),
 	write('program successfully loaded :-)'), nl,
-	verify.
+	((Verify == true) -> verify ; true).
 
 sdcg_abort(E) :-
 	nl,write(E),nl,abort.
@@ -932,6 +987,7 @@ write_prism_program(Stream) :-
 	(sdcg_option(use_append) -> write_append_all ; true),
 	(sdcg_option(use_foc_cheat) -> write_mysterious_all ; true),
 	(not sdcg_option(maxdepth,0) -> write_incr_depth ; true),
+%	retractall(sdcg_user_option(_,_)),	
 	section('User defined'),
 	listing,
 	set_output(PreviousStream).
@@ -987,7 +1043,6 @@ write_sdcg_start_rule :-
 	retractall(sdcg_start_definition(_)),
 	(sdcg_option(use_append) -> write_sdcg_start_rule_append; true).
 
-	
 write_sdcg_start_rule_append :-
 	sdcg_start_definition_append(StartSymbol/Arity),
 	portray_clause(sdcg_start_definition_append(StartSymbol/Arity)),
@@ -1013,11 +1068,13 @@ remove_condition_lists([CL|R]) :-
 	remove_rule(CL,1),
 	remove_condition_lists(R).
 
-write_consume1 :-
+/*
+write_consume :-
 	Head =.. [ consume, A, B, C],
 	Body =.. [ =, A, [B|C] ],
 	Clause =.. [ :-, Head, Body ],
 	portray_clause(Clause).
+*/
 
 write_consume :-
 	write_append,
@@ -1025,7 +1082,7 @@ write_consume :-
 	Body =.. [ ap, [B], C, A ],
 	Clause =.. [ :-, Head, Body ],
 	portray_clause(Clause).
-	
+
 write_append :-
 	Head1 =.. [ ap, [], A, B],
 	Body1 =.. [ =, B, A ],
@@ -1054,6 +1111,8 @@ write_mysterious_all :-
 	portray_clause(Clause).
 
 write_incr_depth :-
+	sdcg_option(maxdepth,MaxDepth),
+	create_integer_range(0,MaxDepth),
 	create_incr_depth(R),
 	portray_clause(R).
 	
@@ -1097,19 +1156,6 @@ update_msw(Name, Value) :-
 		retract(values(Name,_)),
 		NewValues = [Value|L],
 		assert(values(Name,NewValues))).
-
-expand_asserted_set(Name, NewValue) :-
-	Clause =.. [Name, Values],
-	% The set clause might not have been asserted yet
-	catch(Clause, _, Values = []),
-	((Values == []) -> 
-		NewClause =.. [ Name, [NewValue]]
-	;
-		retract(Clause),
-		union([NewValue],Values,NewValues),
-		NewClause =.. [ Name, NewValues ]
-	),
-	assert(NewClause).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -198,6 +198,19 @@ combine_two([E1|R1], [E2|R2], Combined) :-
 % True is the two sets are equal
 set_equal(Set1,Set2) :-
 	subtract(Set1,Set2,[]).
+
+expand_asserted_set(Name, NewValue) :-
+	Clause =.. [Name, Values],
+	% The set clause might not have been asserted yet
+	catch(Clause, _, Values = []),
+	((Values == []) -> 
+		NewClause =.. [ Name, [NewValue]]
+	;
+		retract(Clause),
+		union([NewValue],Values,NewValues),
+		NewClause =.. [ Name, NewValues ]
+	),
+	assert(NewClause).
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Various utilities which are not directly used by the compiler,

@@ -2,6 +2,7 @@
 % Rules for converting between parse trees and sdcg rules
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % We assume that parse trees are given as Prolog lists.
+% FIXME: Not done
 
 parse_tree_rules([],[],[]).
 parse_tree_rules([Root, Children], Rule, [Rule|RulesRest]) :-

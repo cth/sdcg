@@ -1,0 +1,40 @@
+
+%%%  PRISM directives  %%%
+target(failure,0).
+failure :-
+        not success.
+success :-
+        start(_, []).
+data(user).
+
+%%%  MSW declarations  %%%
+values(test(0), [test_0_1]).
+
+%%%  Start symbol  %%%
+start(A, B) :-
+        test(A, B).
+
+%%%  Selector rules:  %%%
+test(A, B) :-
+        msw(test(0), C),
+        sdcg_rule(C, A, B).
+
+%%%  Implementation rules:  %%%
+sdcg_rule(test_0_1, A, B) :-
+        consume(A, a, C),
+	consume(C, b, D),
+	consume(D, c, B).
+
+%%%  Utilities:  %%%
+ap([], A, B) :-
+        B=A.
+ap([A|B], D, [A|C]) :-
+        ap(B, D, C).
+consume(A, B, C) :-
+        ap([B], C, A).
+all([A], cont(A,B)) :-
+        cont(A, B).
+
+%%%  User defined  %%%
+sdcg_user_option(debug, true).
+sdcg_user_option(use_foc_cheat, true).
