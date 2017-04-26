@@ -56,7 +56,7 @@ yes
 ```
 
 
-##Files:
+## Files
   * compiler/
     * Contains the code of the SDCG compiler
   * util/
