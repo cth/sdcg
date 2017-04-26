@@ -12,10 +12,11 @@ write_n(N,Atom) :-
 	write(Atom),
 	write_n(M,Atom).
 
+% This is built-in in b-prolog Version 7.8.b1
 % Tell me if X is a list (note, doesn't work with empty lists )
-is_list(X) :-
-	nonvar(X),
-	functor(X,'.',_).
+%is_list(X) :-
+%	nonvar(X),
+%	functor(X,'.',_).
 	
 list_item(X,[X]).
 

@@ -31,17 +31,13 @@ sdcg_default_option(use_append,false).
 sdcg_default_option(postload_verification_check,false).
 
 sdcg_option(Opt, Val) :-
-	(clause(sdcg_user_option(Opt,_),_) ->
-		sdcg_user_option(Opt,Val)
-		;
-	 	sdcg_default_option(Opt,Val)
+	(clause(sdcg_user_option(Opt,_),_) -> sdcg_user_option(Opt,Val)
+	; sdcg_default_option(Opt,Val)
 	).
 
 % These two shortcuts may be used for boolean options
-sdcg_option(Opt) :-
-	sdcg_option(Opt,true).
-sdcg_set_option(Opt) :-
-	sdcg_set_option(Opt,true).
+sdcg_option(Opt)     :- sdcg_option(Opt,true).
+sdcg_set_option(Opt) :- sdcg_set_option(Opt,true).
 	
 sdcg_set_option(Opt,Val) :-
 	check_valid_option(Opt,Val),
@@ -53,34 +49,29 @@ sdcg_unset_option(Opt) :-
 	retractall(sdcg_user_option(Opt,_)).
 	
 sdcg_boolean_option(X) :-
-	sdcg_default_option(X,false)
-	;
-	sdcg_default_option(X,true).
-	
+	sdcg_default_option(X,Y),
+	member(Y,[true,false]).
+
 sdcg_positive_integer_option(X) :-
 	sdcg_default_option(X,Y),
 	integer(Y).
 
 check_valid_option(Opt,Val) :-
-	(check_option_name(Opt) ->
-		(check_option_value(Opt,Val) ; throw(invalid_option_value(Opt,Val)))
-		;
-		throw(invalid_option(Opt))
-	).
+	check_option_name(Opt) -> check_valid_option_1(Opt, Val)
+	; throw(invalid_option(Opt)).
+check_valid_option_1(Opt,Val) :-
+	check_option_value(Opt,Val) -> true
+	; throw(invalid_option_value(Opt,Val)).
 
 check_option_name(Opt) :-
 	ground(Opt),
 	sdcg_default_option(Opt,_). % There must a default option with this name
 
-check_option_value(Opt,Val) :-
-	ground(Val),
-	(
-		(sdcg_boolean_option(Opt), member(Val,[true,false]))
-		;
-		(sdcg_positive_integer_option(Opt), integer(Val), Val > 0)
-		;
-		atom(Val)
-	).
+check_option_value(Opt,Val)   :- ground(Val), check_option_value_1(Opt, Val).
+check_option_value_1(Opt,Val) :- sdcg_boolean_option(Opt), member(Val,[true,false]).
+check_option_value_1(Opt,Val) :- sdcg_positive_integer_option(Opt), integer(Val), Val > 0.
+check_option_value_1(_Opt,Val) :- atom(Val).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Clause translation

@@ -8,7 +8,7 @@
 
 % This is the path to directory where the SDCG compiler is located:
 % Edit this to reflect the path of your installation.
-sdcg_config(sdcg_directory('/Users/cth/Documents/code/sdcg')).
+sdcg_config(sdcg_directory('/homes/hny4/vsaraswa/code/sdcg')).
 
 % Load the compiler library
 :- 	catch(sdcg_directory(Dir),_,sdcg_config(sdcg_directory(Dir))),
