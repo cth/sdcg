@@ -176,7 +176,7 @@ test_resolve_expand_mode2 :-
 	assert(number(he,sg)),
 	assert(expand_mode(number(-,+))),
 	% test:
-	Expander =.. [ number, X, Y ],
+	Expander = number(_X, _Y),
 	resolve_expand_mode(Expander, ModeList),
 	ModeList == [-,+], % correctness assertion
 	% cleanup
@@ -197,7 +197,7 @@ test_expand_feature :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 test_default_options :-
-	sdcg_option(start_symbol, sdcg),
+	sdcg_option(start_symbol, start),
 	sdcg_option(parsetree,false),
 	sdcg_option(maxdepth,0),
 	sdcg_option(prism_file, 'generated_sdcg.psm'),
@@ -216,23 +216,23 @@ test_set_unset_option :-
 	
 % Test rewrite with just difference rules. Default behaviour.
 test_rewrite_rule_rhs_simple :-
-	rewrite_rule_rhs(In,Out,Depth,[const1(a,b),const2(c,d)],Parsetree,(const1(a,b,In,Out1),const2(c,d,Out1,Out))).
+	rewrite_rule_rhs(In,Out,_Depth,[const1(a,b),const2(c,d)],_Parsetree,(const1(a,b,In,Out1),const2(c,d,Out1,Out))).
 	
 test_rewrite_rule_rhs_with_parsetree_1 :-
 	sdcg_set_option(parsetree),
-	rewrite_rule_rhs(In,Out,_Depth,
+	rewrite_rule_rhs(In,_Out,_Depth,
 		[const1(a,b)], % Input constitutents
 		[[const1(a,b),ParseTreeChild1]], % Expected parsetree
-		(const1(a,b,In,Out1,ParseTreeChild1))
+		(const1(a,b,In,_Out1,ParseTreeChild1))
 	),
 	sdcg_unset_option(parsetree).
 
 test_rewrite_rule_rhs_with_parsetree_2 :-
 	sdcg_set_option(parsetree),
-	rewrite_rule_rhs(In,Out,_Depth,
+	rewrite_rule_rhs(In,_Out,_Depth,
 		[const1(a,b),const2(c,d)], % Input constitutents
 		[[const1(a,b),ParseTreeChild1],[const2(c,d),ParseTreeChild2]], % Expected parsetree
-		(const1(a,b,In,Out1,ParseTreeChild1),(const2(c,d,Out1,Out2,ParseTreeChild2)))
+		(const1(a,b,In,Out1,ParseTreeChild1),(const2(c,d,Out1,_Out2,ParseTreeChild2)))
 	),
 	sdcg_unset_option(parsetree).
 
@@ -244,59 +244,71 @@ test_rewrite_rule_rhs_with_parsetree_3 :-
 		(const1(a,b,In,Out1,ParseTreeChild1),(const2(c,d,Out1,Out2,ParseTreeChild2),(const3(e,f,Out2,Out3,ParseTreeChild3),const4(g,h,Out3,Out,ParseTreeChild4))))
 	),
 	sdcg_unset_option(parsetree).
-	nl,write(Parsetree),nl.
+%	nl,write(Parsetree),nl.
 	
 % should generate a simple rule containing
-test_create_selector_rule :-
-	create_selector_rule(testrule,2,[],SelectorRule),
-	SelectorRule =.. [ :-, testrule(A,B,C,D), (msw(testrule(2),E),sdcg_rule(E,A,B,C,D)) ].
+test_create_selector_rule :- test_create_selector_rule(_).
+test_create_selector_rule(SelectorRule):-
+	sdcg_unset_option(parsetree),
+	sdcg_unset_option(maxdepth),	
+	create_selector_rule(testrule,2,SelectorRule),
+	SelectorRule = (testrule(A,B,C,D) :- msw(testrule(2),E),testrule_impl(E,A,B,C,D)).
 
 % This should generate an implementation rule without parse tree and depth feature
 test_create_implementation_rule_simple :-
 	% Make sure that parse tree and depth options are unset
 	sdcg_unset_option(parsetree),
 	sdcg_unset_option(maxdepth),
-	create_implementation_rule(testrule,[A,b,C],[child(A),child(B),child(C)],ImplRule),
-	ImplRule =.. [	:-,
-					sdcg_rule(testrule,A,b,C,In,Out),
-					(child(A,In,Out1),(child(b,Out1,Out2),child(C,Out2,Out))) ].
+	create_implementation_rule(testrule,sel, [A,b,C],[child(A),child(_B),child(C)],ImplRule),
+	ImplRule = (sel_impl(testrule,A,b,C,In,Out) :-
+		     child(A,In,Out1),child(b,Out1,Out2),child(C,Out2,Out)).
 					
 test_create_implementation_rule_with_parsetree :-
-	% Make sure that parse tree and depth options are unset
+	% Make sure that parse tree and depth options are set
 	sdcg_set_option(parsetree),
-	create_implementation_rule(testrule,[A,b,C],[child(A),child(B),child(C)],ImplRule),
-	ImplRule =.. [	:-,
-					sdcg_rule(testrule,A,b,C,In,Out,[testrule(A,b,C), [Child1Parsetree,Child2Parsetree,Child3Parsetree]]),
-					(child(A,In,Out1,Child1Parsetree),(child(b,Out1,Out2,Child2Parsetree),child(C,Out2,Out,Child3Parsetree))) ],
+	create_implementation_rule(testrule,sel, [A,b,C],[child(A),child(_B),child(C)],ImplRule),
+	ImplRule = (sel_impl(testrule,A,b,C,In,Out,
+			     [sel(A,b,C), [Child1Parsetree,Child2Parsetree,Child3Parsetree]]):-
+		    child(A,In,Out1,Child1Parsetree),
+		    child(b,Out1,Out2,Child2Parsetree),
+		    child(C,Out2,Out,Child3Parsetree)),
 	sdcg_unset_option(parsetree).
 
 test_create_implementation_rule_with_parsetree_include_difflists :-
-	% Make sure that parse tree and depth options are unset
+	% Make sure that parse tree and difflist options are set and maxdepth unset
 	sdcg_set_option(parsetree),
 	sdcg_set_option(parsetree_include_difflists),
-	create_implementation_rule(testrule,[A,b,C],[child(A),child(B),child(C)],ImplRule),
-	ImplRule =.. [	:-,
-					sdcg_rule(testrule,A,b,C,In,Out,[testrule(A,b,C,In,Out), [Child1Parsetree,Child2Parsetree,Child3Parsetree]]),
-					(child(A,In,Out1,Child1Parsetree),(child(b,Out1,Out2,Child2Parsetree),child(C,Out2,Out,Child3Parsetree))) ],
+	sdcg_unset_option(maxdepth),	
+	create_implementation_rule(testrule,sel, [A,b,C],[child(A),child(_B),child(C)],ImplRule),
+	ImplRule = (sel_impl(testrule,A,b,C,In,Out,
+			     [sel(A,b,C,In,Out), [Child1Parsetree,Child2Parsetree,Child3Parsetree]]):-
+		    child(A,In,Out1,Child1Parsetree),
+		    child(b,Out1,Out2,Child2Parsetree),
+		    child(C,Out2,Out,Child3Parsetree)),
 	sdcg_unset_option(parsetree_include_difflists),
 	sdcg_unset_option(parsetree).
 
 test_create_implementation_rule_with_depth :-
 	% Make sure that parse tree and depth options are unset
+	sdcg_unset_option(parsetree_include_difflists),
+	sdcg_unset_option(parsetree),
 	sdcg_set_option(maxdepth,10),
-	create_implementation_rule(testrule,[A,b,C],[child(A),child(B),child(C)],ImplRule),
-	ImplRule =.. [	:-,
-					sdcg_rule(testrule,A,b,C,In,Out,Depth),
-					(child(A,In,Out1,Depth),(child(b,Out1,Out2,Depth),child(C,Out2,Out,Depth))) ],
+	create_implementation_rule(testrule,sel,[A,b,C],[child(A),child(_B),child(C)],ImplRule),
+	ImplRule =(sel_impl(testrule,A,b,C,In,Out,Depth) :-
+		   child(A,In,Out1,Depth),
+		   child(b,Out1,Out2,Depth),
+		   child(C,Out2,Out,Depth)),
 	sdcg_unset_option(maxdepth).
 	
 test_create_implementation_rule_with_parsetree_and_depth :-
 	sdcg_set_option(parsetree),
 	sdcg_set_option(maxdepth,10),
-	create_implementation_rule(testrule,[A,b,C],[child(A),child(B),child(C)],ImplRule),
-	ImplRule =.. [	:-,
-					sdcg_rule(testrule,A,b,C,In,Out,[testrule(A,b,C),[Child1Parsetree,Child2Parsetree,Child3Parsetree]],Depth),
-					(child(A,In,Out1,Child1Parsetree,Depth),(child(b,Out1,Out2,Child2Parsetree,Depth),child(C,Out2,Out,Child3Parsetree,Depth))) ],
+	create_implementation_rule(testrule,sel,[A,b,C],[child(A),child(_B),child(C)],ImplRule),
+	ImplRule = (sel_impl(testrule,A,b,C,In,Out,
+			     [sel(A,b,C),[Child1Parsetree,Child2Parsetree,Child3Parsetree]],Depth):-
+		    child(A,In,Out1,Child1Parsetree,Depth),
+		    child(b,Out1,Out2,Child2Parsetree,Depth),
+		    child(C,Out2,Out,Child3Parsetree,Depth)),
 	sdcg_unset_option(parsetree),
 	sdcg_unset_option(maxdepth).
 
@@ -306,12 +318,13 @@ test_create_implementation_rule_with_parsetree_and_depth :-
 
 test_depth_check_transform :-
 	% First create a selector rule
-	create_selector_rule(testrule,2,[],SelectorRule),
+	create_selector_rule(testrule,2,SelectorRule),
 	add_selector_depth_check(SelectorRule,ModSelectorRule),
-	ModSelectorRule =.. [ :-,
-		testrule([A,B,C,D,E]),
-		(incr_depth(E,F),(msw(testrule(2),G),sdcg_rule(G,A,B,C,D,F)))
-	].
+	ModSelectorRule = (testrule(A,B,C,D,E) :- 
+ 			   incr_depth(E,F),
+			   msw(testrule(2),G),
+			   testrule_impl(G,A,B,C,D,F)).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test various
